@@ -44,14 +44,13 @@ export default function SignupScreen({ navigation }: any) {
       });
 
       if (data.user) {
-        const { error: insertError } = await supabase.from('users').insert([
+        const { error: insertError } = await supabase.from('influencers').insert([
           {
             uuid: data.user.id,
             email: email,
             name: name,
             status: 'pending',
             role: 'influencer',
-            // created_at: new Date().toISOString(),
           },
         ]);
 

@@ -1,5 +1,3 @@
-"use client"
-
 import { useState } from "react"
 import {
   StyleSheet,
@@ -26,7 +24,6 @@ export default function LoginScreen({ navigation }: any) {
   const router = useRouter();
 
   async function signInWithEmail() {
-    // Basic validation
     if (!email || !password) {
       Alert.alert("Error", "Please fill in all fields")
       return
@@ -42,9 +39,6 @@ export default function LoginScreen({ navigation }: any) {
       if (error) throw error
 
       router.push('/tabs');
-
-      // If successful, the session will be automatically stored
-      // and your app can navigate to the main screen
     } catch (error: any) {
       Alert.alert("Error", error.message)
     } finally {

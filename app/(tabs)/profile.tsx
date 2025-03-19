@@ -1,9 +1,11 @@
 import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, TextInput, Modal, Alert, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Instagram, Eye, Users, Briefcase, Camera, X, Check, Link, Plus, Trash2 } from 'lucide-react-native';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Svg, { Path } from 'react-native-svg';
 import * as ImagePicker from 'expo-image-picker';
+import { supabase } from '@/utils/supabase';
+import { useRouter } from 'expo-router';
 
 // Type pour les contenus créés
 interface Content {
@@ -27,49 +29,49 @@ interface Profile {
 }
 
 // Données fictives pour le profil
-const initialProfile: Profile = {
-  name: 'Sophie Martin',
-  username: 'sophiemartin',
-  bio: 'Créatrice de contenu lifestyle & food à Marseille 🌊 | Collaboration: sophie@contact.com',
-  avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60',
-  instagramUrl: 'https://instagram.com/sophiemartin',
-  tiktokUrl: 'https://tiktok.com/sophiemartin',
-  collaborations: 24,
-  views: 125000,
-  followers: 15600,
-  contents: [
-    {
-      id: '1',
-      type: 'post',
-      image: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'
-    },
-    {
-      id: '2',
-      type: 'carousel',
-      image: 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'
-    },
-    {
-      id: '3',
-      type: 'reel',
-      image: 'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?ixlib=rb-1.2.1&auto=format&fit=crop&w=1024&q=80'
-    },
-    {
-      id: '4',
-      type: 'tiktok',
-      image: 'https://images.unsplash.com/photo-1466978913421-dad2ebd01d17?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'
-    },
-    {
-      id: '5',
-      type: 'reel',
-      image: 'https://images.unsplash.com/photo-1516684732162-798a0062be99?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'
-    },
-    {
-      id: '6',
-      type: 'post',
-      image: 'https://images.unsplash.com/photo-1482049016688-2d3e1b311543?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'
-    }
-  ]
-};
+// const initialProfile: Profile = {
+//   name: 'Sophie Martin',
+//   username: 'sophiemartin',
+//   bio: 'Créatrice de contenu lifestyle & food à Marseille 🌊 | Collaboration: sophie@contact.com',
+//   avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60',
+//   instagramUrl: 'https://instagram.com/sophiemartin',
+//   tiktokUrl: 'https://tiktok.com/sophiemartin',
+//   collaborations: 24,
+//   views: 125000,
+//   followers: 15600,
+//   contents: [
+//     {
+//       id: '1',
+//       type: 'post',
+//       image: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'
+//     },
+//     {
+//       id: '2',
+//       type: 'carousel',
+//       image: 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'
+//     },
+//     {
+//       id: '3',
+//       type: 'reel',
+//       image: 'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?ixlib=rb-1.2.1&auto=format&fit=crop&w=1024&q=80'
+//     },
+//     {
+//       id: '4',
+//       type: 'tiktok',
+//       image: 'https://images.unsplash.com/photo-1466978913421-dad2ebd01d17?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'
+//     },
+//     {
+//       id: '5',
+//       type: 'reel',
+//       image: 'https://images.unsplash.com/photo-1516684732162-798a0062be99?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'
+//     },
+//     {
+//       id: '6',
+//       type: 'post',
+//       image: 'https://images.unsplash.com/photo-1482049016688-2d3e1b311543?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'
+//     }
+//   ]
+// };
 
 // Fonction pour formater les nombres
 const formatNumber = (num: number): string => {
@@ -78,7 +80,7 @@ const formatNumber = (num: number): string => {
   } else if (num >= 1000) {
     return (num / 1000).toFixed(1) + 'K';
   } else {
-    return num.toString();
+    return num;
   }
 };
 
@@ -95,18 +97,20 @@ const TikTokLogo = ({ size = 18, color = '#fff' }) => {
 };
 
 export default function ProfileScreen() {
-  const [profile, setProfile] = useState<Profile>(initialProfile);
+  const [initialProfile, setInitialProfile] = useState();
+  const [profile, setProfile] = useState<Profile>();
   const [isEditing, setIsEditing] = useState(false);
+  const router = useRouter();
   
   // États pour l'édition directe
-  const [nameInput, setNameInput] = useState(profile.name);
-  const [usernameInput, setUsernameInput] = useState(profile.username);
-  const [bioInput, setBioInput] = useState(profile.bio);
-  const [instagramInput, setInstagramInput] = useState(profile.instagramUrl);
-  const [tiktokInput, setTiktokInput] = useState(profile.tiktokUrl);
-  const [collaborationsInput, setCollaborationsInput] = useState(profile.collaborations.toString());
-  const [viewsInput, setViewsInput] = useState(profile.views.toString());
-  const [followersInput, setFollowersInput] = useState(profile.followers.toString());
+  const [nameInput, setNameInput] = useState(profile?.name || '');
+  const [usernameInput, setUsernameInput] = useState(profile?.username || '');
+  const [bioInput, setBioInput] = useState(profile?.bio || '');
+  const [instagramInput, setInstagramInput] = useState(profile?.instagramUrl || '');
+  const [tiktokInput, setTiktokInput] = useState(profile?.tiktokUrl || '');
+  const [collaborationsInput, setCollaborationsInput] = useState(0);
+  const [viewsInput, setViewsInput] = useState(0);
+  const [followersInput, setFollowersInput] = useState(0);
   
   // État pour l'ajout de contenu
   const [addContentModalVisible, setAddContentModalVisible] = useState(false);
@@ -118,21 +122,48 @@ export default function ProfileScreen() {
   // Référence pour le scroll
   const scrollViewRef = useRef<ScrollView>(null);
 
+  useEffect(() => {
+    const fetchUserData = async () => {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const user = sessionData?.session?.user;
+
+      if (!user) return;
+
+      try {
+        const { data, error } = await supabase
+          .from("influencers")
+          .select("*")
+          .eq("uuid", user.id)
+          .single();
+
+        if (error) throw error;
+        console.log(data, 'data')
+        setProfile(data);
+      } catch (error: any) {
+        console.error("Error fetching user data:", error.message);
+      }
+    };
+
+    fetchUserData();
+  }, []);
+
   // Fonction pour activer le mode édition
   const enableEditing = () => {
     setIsEditing(true);
-    setNameInput(profile.name);
-    setUsernameInput(profile.username);
-    setBioInput(profile.bio);
-    setInstagramInput(profile.instagramUrl);
-    setTiktokInput(profile.tiktokUrl);
-    setCollaborationsInput(profile.collaborations.toString());
-    setViewsInput(profile.views.toString());
-    setFollowersInput(profile.followers.toString());
+    setNameInput(profile?.name);
+    setUsernameInput(profile?.username);
+    setBioInput(profile?.bio);
+    setInstagramInput(profile?.instagramUrl);
+    setTiktokInput(profile?.tiktokUrl);
+    // setCollaborationsInput(profile?.collaborations.toString());
+    // setViewsInput(profile?.views?.toString());
+    // setFollowersInput(profile?.followers?.toString());
   };
 
   // Fonction pour sauvegarder les modifications
-  const saveProfile = () => {
+  const saveProfile = async () => {
+    if (!profile) return;
+  
     const updatedProfile = {
       ...profile,
       name: nameInput,
@@ -140,14 +171,25 @@ export default function ProfileScreen() {
       bio: bioInput,
       instagramUrl: instagramInput,
       tiktokUrl: tiktokInput,
-      collaborations: parseInt(collaborationsInput) || 0,
-      views: parseInt(viewsInput) || 0,
-      followers: parseInt(followersInput) || 0
+      // collaborations: parseInt(collaborationsInput) || 0,
+      // views: parseInt(viewsInput) || 0,
+      // followers: parseInt(followersInput) || 0
     };
-    
-    setProfile(updatedProfile);
-    setIsEditing(false);
-  };
+  
+    try {
+      const { error } = await supabase
+        .from("influencers")
+        .update(updatedProfile)
+        .eq("uuid", profile.uuid); // Make sure to use the correct user ID field
+  
+      if (error) throw error;
+  
+      setProfile(updatedProfile); // Update local state after successful update
+      setIsEditing(false);
+    } catch (error: any) {
+      console.error("Error updating profile:", error.message);
+    }
+  };  
 
   // Fonction pour annuler les modifications
   const cancelEditing = () => {
@@ -161,17 +203,39 @@ export default function ProfileScreen() {
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
         aspect: [1, 1],
-        quality: 1,
+        quality: 0.2,
       });
-
+  
       if (!result.canceled && result.assets && result.assets.length > 0) {
-        setProfile(prev => ({
-          ...prev,
-          avatar: result.assets[0].uri
-        }));
+        const imageUri = result.assets[0].uri;
+  
+        const formData = new FormData();
+        formData.append("file", {
+          uri: imageUri,
+          type: "image/jpeg", // Adjust based on file type
+          name: "upload.jpg",
+        });
+        formData.append("upload_preset", 'ml_default');
+  
+        const response = await fetch('https://api.cloudinary.com/v1_1/dqzknasup/image/upload', {
+          method: "POST",
+          body: formData,
+        });
+  
+        const data = await response.json();
+  
+        if (data.secure_url) {
+          setProfile(prev => ({
+            ...prev,
+            avatar: data.secure_url, // Save Cloudinary URL
+          }));
+        } else {
+          throw new Error("Upload failed");
+        }
       }
     } catch (error) {
-      Alert.alert('Erreur', 'Impossible de sélectionner une image');
+      Alert.alert("Error", "Image upload failed");
+      console.error(error);
     }
   };
 
@@ -246,12 +310,22 @@ export default function ProfileScreen() {
           <View style={styles.headerTop}>
             <Text style={styles.headerTitle}>Profil</Text>
             {!isEditing ? (
+              <>
               <TouchableOpacity 
                 style={styles.editButton}
                 onPress={enableEditing}
               >
                 <Text style={styles.editButtonText}>Modifier</Text>
               </TouchableOpacity>
+              <TouchableOpacity 
+              style={styles.editButton}
+              onPress={() => {
+                supabase.auth.signOut()
+                router.push('/auth/login')
+              }}
+            >
+              <Text style={styles.editButtonText}>Logout</Text>
+            </TouchableOpacity></>
             ) : (
               <View style={styles.editActions}>
                 <TouchableOpacity 
@@ -272,9 +346,9 @@ export default function ProfileScreen() {
           
           <View style={styles.profileHeader}>
             <View style={styles.avatarContainer}>
-              {profile.avatar && (
+              {profile?.avatar && (
                 <Image 
-                  source={{ uri: profile.avatar }} 
+                  source={{ uri: profile?.avatar }} 
                   style={styles.avatar} 
                 />
               )}
@@ -298,7 +372,7 @@ export default function ProfileScreen() {
                   placeholderTextColor="#999"
                 />
               ) : (
-                <Text style={styles.profileName}>{profile.name}</Text>
+                <Text style={styles.profileName}>{profile?.name}</Text>
               )}
               
               {isEditing ? (
@@ -311,7 +385,7 @@ export default function ProfileScreen() {
                   autoCapitalize="none"
                 />
               ) : (
-                <Text style={styles.profileUsername}>{profile.username}</Text>
+                <Text style={styles.profileUsername}>{profile?.username}</Text>
               )}
             </View>
           </View>
@@ -377,7 +451,7 @@ export default function ProfileScreen() {
                   placeholderTextColor="#999"
                 />
               ) : (
-                <Text style={styles.statValue}>{formatNumber(profile.collaborations)}</Text>
+                <Text style={styles.statValue}>{formatNumber(profile?.collaborations)}</Text>
               )}
               <Text style={styles.statLabel}>Collaborations</Text>
             </View>
@@ -396,7 +470,7 @@ export default function ProfileScreen() {
                   placeholderTextColor="#999"
                 />
               ) : (
-                <Text style={styles.statValue}>{formatNumber(profile.views)}</Text>
+                <Text style={styles.statValue}>{formatNumber(profile?.views)}</Text>
               )}
               <Text style={styles.statLabel}>Vues</Text>
             </View>
@@ -415,7 +489,7 @@ export default function ProfileScreen() {
                   placeholderTextColor="#999"
                 />
               ) : (
-                <Text style={styles.statValue}>{formatNumber(profile.followers)}</Text>
+                <Text style={styles.statValue}>{formatNumber(profile?.followers)}</Text>
               )}
               <Text style={styles.statLabel}>Abonnés</Text>
             </View>
@@ -434,7 +508,7 @@ export default function ProfileScreen() {
                 placeholderTextColor="#999"
               />
             ) : (
-              <Text style={styles.bioText}>{profile.bio}</Text>
+              <Text style={styles.bioText}>{profile?.bio}</Text>
             )}
           </View>
         </View>
@@ -454,7 +528,7 @@ export default function ProfileScreen() {
           </View>
           
           <View style={styles.contentsList}>
-            {profile.contents.map(content => (
+            {profile?.contents?.map(content => (
               <TouchableOpacity 
                 key={content.id} 
                 style={styles.contentItemWrapper}
