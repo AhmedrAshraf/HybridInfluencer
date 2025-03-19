@@ -2,10 +2,11 @@ import { View, Text, StyleSheet, TextInput, ScrollView, Image, TouchableOpacity,
 import { Bell, Search, Heart, MapPin, X, Navigation } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { allPlaces } from '../../data/places';
 import { useFavorites } from '../../hooks/useFavorites';
-import { useRouter } from 'expo-router';
+import { useNavigation, useRouter } from 'expo-router';
+import { supabase } from '@/utils/supabase';
 
 const ACCENT_COLOR = '#f46d63';
 const ICON_COLOR = '#8e8e93';
@@ -202,6 +203,7 @@ const PlaceList = ({ title, data, isLastSection = false, fullWidth = false }: {
 };
 
 export default function ExploreScreen() {
+  const router = useRouter();
   const [locationModalVisible, setLocationModalVisible] = useState(false);
   const [notificationsModalVisible, setNotificationsModalVisible] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('restaurants');
