@@ -4,6 +4,8 @@ import { useState, useRef, useEffect } from 'react';
 import { Search, ArrowLeft, Send, Paperclip, Mic, MoveVertical as MoreVertical } from 'lucide-react-native';
 import { allPlaces } from '../../data/places';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useApp } from '../context/useContext';
+import { supabase } from '@/utils/supabase';
 
 // Types pour les messages
 interface Message {
@@ -102,7 +104,8 @@ const formatMessageTime = (timestamp: number) => {
 };
 
 export default function MessagesScreen() {
-  const [conversations, setConversations] = useState<Conversation[]>(mockConversations);
+  const { establishers, conversations, fetchConversations, setConversations } = useApp();
+  // const [conversations, setConversations] = useState<Conversation[]>(mockConversations);
   const [activeConversation, setActiveConversation] = useState<Conversation | null>(null);
   const [newMessage, setNewMessage] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
@@ -111,9 +114,13 @@ export default function MessagesScreen() {
   const params = useLocalSearchParams();
   const { businessId } = params;
 
+  useEffect(() => {
+    fetchConversations();
+  }, []);
+
   // Filtrer les conversations en fonction de la recherche
   const filteredConversations = conversations.filter(conversation => {
-    const place = allPlaces.find(p => p.id === conversation.businessId);
+    const place = establishers.find(p => p.id == conversation.businessId);
     if (!place) return false;
     
     return place.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -122,41 +129,57 @@ export default function MessagesScreen() {
 
   // Fonction pour obtenir les détails d'un établissement
   const getBusinessDetails = (businessId: string) => {
-    return allPlaces.find(place => place.id === businessId);
+    return establishers.find(place => place.id == businessId);
   };
 
   // Fonction pour trouver une conversation existante ou en créer une nouvelle
-  const findOrCreateConversation = (businessId: string) => {
-    // Chercher une conversation existante
-    let conversation = conversations.find(conv => conv.businessId === businessId);
-    
-    // Si aucune conversation n'existe, en créer une nouvelle
-    if (!conversation) {
-      const business = getBusinessDetails(businessId);
+  const findOrCreateConversation = async (businessId: string) => {
+    // Fetch conversation from Supabase
+    let { data: conversation, error } = await supabase
+      .from("conversations")
+      .select("*")
+      .eq("businessId", businessId)
+      .single();
+
+      console.log(conversation, 'conversation in findor create function')
+  
+    if (error || !conversation) {
+      // Fetch business details (assuming you have a function for this)
+      const business = await getBusinessDetails(businessId);
       if (!business) return null;
-      
-      const newConversation: Conversation = {
-        id: `new-${Date.now()}`,
-        businessId: businessId,
-        lastMessage: "Aucun message",
-        lastMessageTime: Date.now(),
-        unreadCount: 0,
-        messages: []
-      };
-      
-      // Ajouter la nouvelle conversation à la liste
-      setConversations(prev => [...prev, newConversation]);
-      
+  
+      // Create a new conversation in Supabase
+      const { data: newConversation, error: insertError } = await supabase
+        .from("conversations")
+        .insert([
+          {
+            businessId: businessId,
+            lastMessage: "Aucun message",
+            lastMessageTime: new Date().toISOString(),
+            unreadCount: 0,
+            messages: [], // Ensure messages is an array
+          },
+        ])
+        .select()
+        .single();
+  
+      if (insertError) {
+        console.error("Error creating conversation:", insertError);
+        return null;
+      }
+  
       return newConversation;
     }
-    
+  
     return conversation;
-  };
+  };  
+  
 
   // Ouvrir automatiquement la conversation si un businessId est fourni
   useEffect(() => {
-    if (businessId && typeof businessId === 'string') {
+    if (businessId) {
       const conversation = findOrCreateConversation(businessId);
+      console.log(conversation, 'conversation in useeffect')
       if (conversation) {
         setActiveConversation(conversation);
       }
@@ -202,80 +225,90 @@ export default function MessagesScreen() {
   };
 
   // Fonction pour envoyer une pièce jointe
-  const sendAttachment = (type: 'image' | 'document', url: string, name?: string) => {
+  const sendAttachment = async (type: 'image' | 'document', url: string, name?: string) => {
     if (!activeConversation) return;
-    
-    const newMsg: Message = {
-      id: `${activeConversation.id}-${activeConversation.messages.length + 1}`,
+  
+    const newMsg = {
+      conversation_id: activeConversation.id,
       text: type === 'image' ? 'Photo' : `Document: ${name}`,
       sender: 'user',
-      timestamp: Date.now(),
+      timestamp: new Date().toISOString(),
       read: false,
-      attachment: {
-        type,
-        url,
-        name
-      }
+      attachment: { type, url, name },
     };
-    
-    // Mettre à jour la conversation active
-    const updatedConversation = {
-      ...activeConversation,
+  
+    const { data, error } = await supabase.from('messages').insert([newMsg]);
+  
+    if (error) {
+      console.error('Error sending attachment:', error);
+      return;
+    }
+  
+    setActiveConversation(prev => ({
+      ...prev,
       lastMessage: `[${type === 'image' ? 'Photo' : 'Document'}]`,
-      lastMessageTime: Date.now(),
-      messages: [...activeConversation.messages, newMsg]
-    };
-    
-    // Mettre à jour la liste des conversations
-    setConversations(prevConversations => 
-      prevConversations.map(conv => 
-        conv.id === activeConversation.id ? updatedConversation : conv
-      )
-    );
-    
-    setActiveConversation(updatedConversation);
-    
-    // Faire défiler jusqu'au dernier message
-    setTimeout(() => {
-      flatListRef.current?.scrollToEnd({ animated: true });
-    }, 100);
+      lastMessageTime: new Date().toISOString(),
+      messages: [...prev.messages, newMsg],
+    }));
   };
+  
 
   // Fonction pour envoyer un message
-  const sendMessage = () => {
+  const sendMessage = async () => {
     if (!newMessage.trim() || !activeConversation) return;
-    
-    const newMsg: Message = {
-      id: `${activeConversation.id}-${activeConversation.messages.length + 1}`,
+  
+    const newMsg = {
+      conversation_id: activeConversation.id,
       text: newMessage.trim(),
-      sender: 'user',
-      timestamp: Date.now(),
-      read: false
+      sender: "user",
+      timestamp: new Date().toISOString(),
+      read: false,
     };
-    
-    // Mettre à jour la conversation active
-    const updatedConversation = {
-      ...activeConversation,
-      lastMessage: newMessage.trim(),
-      lastMessageTime: Date.now(),
-      messages: [...activeConversation.messages, newMsg]
-    };
-    
-    // Mettre à jour la liste des conversations
-    setConversations(prevConversations => 
-      prevConversations.map(conv => 
-        conv.id === activeConversation.id ? updatedConversation : conv
-      )
-    );
-    
-    setActiveConversation(updatedConversation);
-    setNewMessage('');
-    
-    // Faire défiler jusqu'au dernier message
-    setTimeout(() => {
-      flatListRef.current?.scrollToEnd({ animated: true });
-    }, 100);
-  };
+  
+    // Insert message into Supabase
+    const { data: insertedMsg, error } = await supabase
+      .from("messages")
+      .insert([newMsg])
+      .select()
+      .single();
+  
+    if (error) {
+      console.error("Error sending message:", error);
+      return;
+    }
+  
+    // Update conversation lastMessage
+    await supabase
+      .from("conversations")
+      .update({
+        lastMessage: insertedMsg.text,
+        lastMessageTime: insertedMsg.timestamp,
+      })
+      .eq("id", activeConversation.id);
+  
+    // Fetch updated messages from Supabase
+    const { data: updatedMessages, error: fetchError } = await supabase
+      .from("messages")
+      .select("*")
+      .eq("conversation_id", activeConversation.id)
+      .order("timestamp", { ascending: true });
+
+    if (fetchError) {
+      console.error("Error fetching messages:", fetchError);
+      return;
+    }
+  
+    // Update conversation locally
+    setActiveConversation((prev) => ({
+      ...prev,
+      lastMessage: insertedMsg.text,
+      lastMessageTime: insertedMsg.timestamp,
+      messages: updatedMessages, // Ensure messages are updated
+    }));
+  
+    setNewMessage("");
+  };  
+  
 
   // Faire défiler jusqu'au dernier message lorsqu'une conversation est ouverte
   useEffect(() => {
@@ -292,14 +325,14 @@ export default function MessagesScreen() {
       const updatedConversation = {
         ...activeConversation,
         unreadCount: 0,
-        messages: activeConversation.messages.map(msg => ({
+        messages: activeConversation?.messages?.map(msg => ({
           ...msg,
           read: true
         }))
       };
       
       setConversations(prevConversations => 
-        prevConversations.map(conv => 
+        prevConversations?.map(conv => 
           conv.id === activeConversation.id ? updatedConversation : conv
         )
       );

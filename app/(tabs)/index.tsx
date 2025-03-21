@@ -3,10 +3,10 @@ import { Bell, Search, Heart, MapPin, X, Navigation } from 'lucide-react-native'
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 import { useEffect, useState } from 'react';
-import { allPlaces } from '../../data/places';
 import { useFavorites } from '../../hooks/useFavorites';
 import { useNavigation, useRouter } from 'expo-router';
 import { supabase } from '@/utils/supabase';
+import { useApp } from '../context/useContext';
 
 const ACCENT_COLOR = '#f46d63';
 const ICON_COLOR = '#8e8e93';
@@ -105,14 +105,31 @@ const NotificationsModal = ({ visible, onClose }: { visible: boolean; onClose: (
   </Modal>
 );
 
-const PlaceList = ({ title, data, isLastSection = false, fullWidth = false }: { 
-  title: string; 
-  data: typeof allPlaces;
-  isLastSection?: boolean;
-  fullWidth?: boolean;
-}) => {
-  const { favoriteIds, toggleFavorite } = useFavorites();
+const PlaceList = ({ title, data, userId, isLastSection = false, fullWidth = false }) => {
+  const { user, fetchFavorites } = useApp();
   const router = useRouter();
+  const [favoriteIds, setFavoriteIds] = useState([]);
+
+  useEffect(() => {
+    if (!user?.uuid) return;
+    const fetchFavorites = async () => {
+      const { data, error } = await supabase.from('favorites').select('place_id').eq('user_id', user?.uuid);
+      if (!error) setFavoriteIds(data.map((fav) => fav.place_id));
+    };
+    fetchFavorites();
+  }, [user?.uuid]);
+
+  const toggleFavorite = async (place) => {
+    if (!user?.uuid) return;
+    const isFavorite = favoriteIds.includes(place.id);
+    if (isFavorite) {
+      const { error } = await supabase.from('favorites').delete().eq('user_id', user?.uuid).eq('place_id', place.id);
+      if (!error) setFavoriteIds((prev) => prev.filter((id) => id !== place.id));
+    } else {
+      const { error } = await supabase.from('favorites').insert([{ user_id: user?.uuid, place_id: place.id }]);
+      if (!error) setFavoriteIds((prev) => [...prev, place.id]);
+    }
+  };
 
   return (
     <>
@@ -167,7 +184,7 @@ const PlaceList = ({ title, data, isLastSection = false, fullWidth = false }: {
                 key={place.id}
                 style={styles.trendingCard}
                 activeOpacity={0.8}
-                onPress={() => router.push(`/(tabs)/${place.id}`)}
+                onPress={() => router.push(/(tabs)/${place.id})}
               >
                 <Image source={{ uri: place.image }} style={styles.trendingImage} />
                 <View style={styles.trendingInfo}>
@@ -208,7 +225,13 @@ export default function ExploreScreen() {
   const [notificationsModalVisible, setNotificationsModalVisible] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('restaurants');
 
-  const filteredPlaces = allPlaces.filter(place => place.category === selectedCategory);
+  const { establishers, fetchEstablishments } = useApp();
+
+  useEffect(() => {
+    fetchEstablishments();
+  }, [])
+
+  const filteredPlaces = establishers.filter(place => place.category === selectedCategory);
   const trendingPlaces = filteredPlaces.filter(place => place.trending);
   const newPlaces = filteredPlaces.filter(place => place.isNew);
 

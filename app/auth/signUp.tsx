@@ -59,14 +59,14 @@ export default function SignupScreen({ navigation }: any) {
 
       if (error) throw error;
 
-      if (!data.session) {
-        Alert.alert(
-          'Verification email sent',
-          'Please check your email to verify your account'
-        );
-      }
+      // if (!data.session) {
+      //   Alert.alert(
+      //     'Verification email sent',
+      //     'Please check your email to verify your account'
+      //   );
+      // }
 
-      router.push('/tabs');
+      router.push('/(tabs)');
     } catch (error: any) {
       Alert.alert('Error', error.message);
     } finally {

@@ -4,9 +4,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ArrowLeft, Heart, MapPin, Calendar, Users, Clock, X, CircleAlert as AlertCircle, Check } from 'lucide-react-native';
 import Map from 'react-map-gl';
 import { useState, useMemo } from 'react';
-import { allPlaces } from '../../data/places';
 import { useFavorites } from '../../hooks/useFavorites';
 import { useReservations } from '../../hooks/useReservations';
+import { useApp } from '../context/useContext';
+import { supabase } from '@/utils/supabase';
 
 const ACCENT_COLOR = '#f46d63';
 const ICON_COLOR = '#8e8e93';
@@ -101,13 +102,14 @@ const generateAvailableHours = (dayOfWeek) => {
 
 export default function PlaceDetails() {
   const { id } = useLocalSearchParams();
+  const { establishers, user } = useApp();
   const router = useRouter();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const { favoriteIds, toggleFavorite } = useFavorites();
   const { addReservation } = useReservations();
   const [reservationModalVisible, setReservationModalVisible] = useState(false);
   const [reservationSuccess, setReservationSuccess] = useState(false);
-  
+
   // États pour le formulaire de réservation
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedTime, setSelectedTime] = useState('');
@@ -176,11 +178,16 @@ export default function PlaceDetails() {
   }, [selectedDate]);
   
   // Fonction pour soumettre la réservation
-  const submitReservation = () => {
+  const submitReservation = async () => {
+    console.log(selectedDate, 'data');
+    console.log(selectedTime, 'time');
     // Créer un objet de réservation
     const newReservation = {
-      id: `new-${Date.now()}`,
+      id: Date.now(),
       placeId: id as string,
+      userId: user?.uuid,
+      influencerName: user?.name,
+      influencerAvatar: user?.avatar,
       date: selectedDate,
       time: selectedTime,
       guests: selectedGuests as 'Seul(e)' | 'Avec un +1',
@@ -190,31 +197,45 @@ export default function PlaceDetails() {
       status: 'pending'
     };
     
-    // Ajouter la réservation
-    addReservation(newReservation);
-    
-    // Afficher le message de succès
-    setReservationSuccess(true);
-    
-    // Fermer le modal après 2 secondes
-    setTimeout(() => {
-      setReservationSuccess(false);
-      setReservationModalVisible(false);
-      
-      // Réinitialiser le formulaire
-      setSelectedDate('');
-      setSelectedTime('');
-      setSelectedGuests('');
-      setSelectedContentTypes([]);
-      setSelectedTimeframe('');
-      setSpecialRequest('');
-      
-      // Rediriger vers l'écran des réservations
-      router.push('/(tabs)/bookings');
-    }, 2000);
+    try {
+      // Insert into Supabase
+      const { data, error } = await supabase
+        .from("reservations")
+        .insert([newReservation]);
+  
+      if (error) {
+        console.error("Error adding reservation:", error.message);
+        return;
+      }
+  
+      // Add the reservation to Zustand state
+      addReservation(newReservation);
+  
+      // Show success message
+      setReservationSuccess(true);
+  
+      // Close the modal after 2 seconds
+      setTimeout(() => {
+        setReservationSuccess(false);
+        setReservationModalVisible(false);
+  
+        // Reset the form
+        setSelectedDate("");
+        setSelectedTime("");
+        setSelectedGuests("");
+        setSelectedContentTypes([]);
+        setSelectedTimeframe("");
+        setSpecialRequest("");
+  
+        // Redirect to reservations page
+        router.push("/(tabs)/bookings");
+      }, 2000);
+    } catch (err) {
+      console.error("Unexpected error:", err);
+    }
   };
 
-  const place = allPlaces.find(p => p.id === id);
+  const place = establishers.find(p => p.id == id);
   if (!place) return null;
 
   const images = [

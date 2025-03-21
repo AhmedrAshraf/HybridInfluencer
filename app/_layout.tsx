@@ -1,8 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Stack, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { supabase } from "@/utils/supabase";
-import { AppProvider } from "../app/context/useContext";
+import { AppProvider, useApp } from "../app/context/useContext";
 
 declare global {
   interface Window {
@@ -10,41 +9,36 @@ declare global {
   }
 }
 
-export default function RootLayout() {
+function RootLayoutInner() {
   const router = useRouter();
-  const [loading, setLoading] = useState(true);
-  // const [user, setUser] = useState(null);
+  const { user } = useApp();
 
   useEffect(() => {
     window.frameworkReady?.();
 
-    const checkUser = async () => {
-      const { data } = await supabase.auth.getSession();
-      const sessionUser = data?.session?.user || null;
-      
-      setUser(sessionUser);
-      setLoading(false);
+    if (user === undefined) return;
 
-      if (!sessionUser) {
-        router.replace("/auth/signUp");
-      } else {
-        router.replace("/tabs");
-      }
-    };
-
-    checkUser();
-  }, []);
-
-  if (loading) return null;
+    if (!user) {
+      router.replace("/auth/signUp");
+    } else {
+      router.replace("/(tabs)");
+    }
+  }, [user]);
 
   return (
+    <>
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="+not-found" />
+      </Stack>
+      <StatusBar style="auto" />
+    </>
+  );
+}
+
+export default function RootLayout() {
+  return (
     <AppProvider>
-      <>
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="+not-found" />
-        </Stack>
-        <StatusBar style="auto" />
-      </>
+      <RootLayoutInner />
     </AppProvider>
   );
 }

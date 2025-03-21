@@ -6,6 +6,7 @@ import Svg, { Path } from 'react-native-svg';
 import * as ImagePicker from 'expo-image-picker';
 import { supabase } from '@/utils/supabase';
 import { useRouter } from 'expo-router';
+import { useApp } from '../context/useContext';
 
 // Type pour les contenus créés
 interface Content {
@@ -27,51 +28,6 @@ interface Profile {
   followers: number;
   contents: Content[];
 }
-
-// Données fictives pour le profil
-// const initialProfile: Profile = {
-//   name: 'Sophie Martin',
-//   username: 'sophiemartin',
-//   bio: 'Créatrice de contenu lifestyle & food à Marseille 🌊 | Collaboration: sophie@contact.com',
-//   avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60',
-//   instagramUrl: 'https://instagram.com/sophiemartin',
-//   tiktokUrl: 'https://tiktok.com/sophiemartin',
-//   collaborations: 24,
-//   views: 125000,
-//   followers: 15600,
-//   contents: [
-//     {
-//       id: '1',
-//       type: 'post',
-//       image: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'
-//     },
-//     {
-//       id: '2',
-//       type: 'carousel',
-//       image: 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'
-//     },
-//     {
-//       id: '3',
-//       type: 'reel',
-//       image: 'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?ixlib=rb-1.2.1&auto=format&fit=crop&w=1024&q=80'
-//     },
-//     {
-//       id: '4',
-//       type: 'tiktok',
-//       image: 'https://images.unsplash.com/photo-1466978913421-dad2ebd01d17?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'
-//     },
-//     {
-//       id: '5',
-//       type: 'reel',
-//       image: 'https://images.unsplash.com/photo-1516684732162-798a0062be99?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'
-//     },
-//     {
-//       id: '6',
-//       type: 'post',
-//       image: 'https://images.unsplash.com/photo-1482049016688-2d3e1b311543?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'
-//     }
-//   ]
-// };
 
 // Fonction pour formater les nombres
 const formatNumber = (num: number): string => {
@@ -97,11 +53,11 @@ const TikTokLogo = ({ size = 18, color = '#fff' }) => {
 };
 
 export default function ProfileScreen() {
-  const [initialProfile, setInitialProfile] = useState();
-  const [profile, setProfile] = useState<Profile>();
+  const { user } = useApp();
+  const [profile, setProfile] = useState<Profile>(user);
   const [isEditing, setIsEditing] = useState(false);
   const router = useRouter();
-  
+
   // États pour l'édition directe
   const [nameInput, setNameInput] = useState(profile?.name || '');
   const [usernameInput, setUsernameInput] = useState(profile?.username || '');
@@ -121,31 +77,6 @@ export default function ProfileScreen() {
   
   // Référence pour le scroll
   const scrollViewRef = useRef<ScrollView>(null);
-
-  useEffect(() => {
-    const fetchUserData = async () => {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const user = sessionData?.session?.user;
-
-      if (!user) return;
-
-      try {
-        const { data, error } = await supabase
-          .from("influencers")
-          .select("*")
-          .eq("uuid", user.id)
-          .single();
-
-        if (error) throw error;
-        console.log(data, 'data')
-        setProfile(data);
-      } catch (error: any) {
-        console.error("Error fetching user data:", error.message);
-      }
-    };
-
-    fetchUserData();
-  }, []);
 
   // Fonction pour activer le mode édition
   const enableEditing = () => {

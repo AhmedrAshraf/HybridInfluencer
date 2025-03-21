@@ -38,7 +38,7 @@ export default function LoginScreen({ navigation }: any) {
 
       if (error) throw error
 
-      router.push('/tabs');
+      router.push('/(tabs)/index');
     } catch (error: any) {
       Alert.alert("Error", error.message)
     } finally {

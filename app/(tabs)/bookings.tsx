@@ -5,6 +5,7 @@ import { MapPin, Calendar, Clock, Users, MessageCircle, CircleCheck as CheckCirc
 import { allPlaces } from '../../data/places';
 import { useRouter } from 'expo-router';
 import { useReservations, Reservation } from '../../hooks/useReservations';
+import { useApp } from '../context/useContext';
 
 // Fonction pour déterminer si une réservation est passée ou à venir
 const isReservationPast = (dateString: string, status: string) => {
@@ -20,18 +21,23 @@ const isReservationPast = (dateString: string, status: string) => {
 
 export default function BookingsScreen() {
   const [activeTab, setActiveTab] = useState<'upcoming' | 'past'>('upcoming');
-  const { reservations, updateReservationStatus } = useReservations();
+  // const { reservations, updateReservationStatus } = useReservations();
   const router = useRouter();
-  
+  const { establishers, reservations, fetchReservations } = useApp();
+
+  useEffect(() => {
+    fetchReservations();
+  }, []);
+
   // Filtrer les réservations en fonction de l'onglet actif
-  const filteredReservations = reservations.filter(reservation => {
+  const filteredReservations = reservations?.filter(reservation => {
     const isPast = isReservationPast(reservation.date, reservation.status);
     return (activeTab === 'upcoming' && !isPast) || (activeTab === 'past' && isPast);
   });
 
   // Fonction pour obtenir les détails d'un lieu à partir de son ID
   const getPlaceDetails = (placeId: string) => {
-    return allPlaces.find(place => place.id === placeId);
+    return establishers.find(place => place.id == placeId);
   };
 
   // Fonction pour naviguer vers la page de messages avec l'établissement spécifique
@@ -111,9 +117,9 @@ export default function BookingsScreen() {
       </View>
       
       {/* Contenu des réservations */}
-      {filteredReservations.length > 0 ? (
+      {filteredReservations?.length > 0 ? (
         <ScrollView style={styles.content}>
-          {filteredReservations.map(reservation => {
+          {filteredReservations?.map(reservation => {
             const place = getPlaceDetails(reservation.placeId);
             if (!place) return null;
             
@@ -162,13 +168,13 @@ export default function BookingsScreen() {
                   
                   <View style={styles.contentTypesContainer}>
                     <Text style={styles.detailLabel}>Type de contenu:</Text>
-                    <View style={styles.tagsContainer}>
+                    {/* <View style={styles.tagsContainer}>
                       {reservation.contentTypes.map((type, index) => (
                         <View key={index} style={styles.tag}>
                           <Text style={styles.tagText}>{type}</Text>
                         </View>
                       ))}
-                    </View>
+                    </View> */}
                   </View>
                   
                   <View style={styles.detailRow}>
