@@ -29,6 +29,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { supabase } from '@/utils/supabase';
 import { useRouter } from 'expo-router';
 import { useApp } from '../context/useContext';
+import * as FileSystem from 'expo-file-system';
 
 // Type pour les contenus créés
 interface Content {
@@ -156,7 +157,7 @@ export default function ProfileScreen() {
   const pickImage = async () => {
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: ImagePicker.MediaTypeOptions.images,
         allowsEditing: true,
         aspect: [1, 1],
         quality: 0.2,
@@ -164,29 +165,34 @@ export default function ProfileScreen() {
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
         const imageUri = result.assets[0].uri;
-
-        const formData: any = new FormData();
-        formData.append('file', {
-          uri: imageUri,
-          type: 'image/jpeg', // Adjust based on file type
-          name: 'upload.jpg',
+  
+        const base64Image = await FileSystem.readAsStringAsync(imageUri, {
+          encoding: FileSystem.EncodingType.Base64,
         });
-        formData.append('upload_preset', 'ml_default');
-
-        const response = await fetch(
-          'https://api.cloudinary.com/v1_1/dqzknasup/image/upload',
-          {
-            method: 'POST',
-            body: formData,
-          }
-        );
-
+  
+        const uploadFormData = new FormData();
+        uploadFormData.append('file', `data:image/jpeg;base64,${base64Image}`);
+        uploadFormData.append('upload_preset', 'ml_default');
+        uploadFormData.append('cloud_name', 'dqzknasup');
+  
+        const response = await fetch('https://api.cloudinary.com/v1_1/dqzknasup/image/upload', {
+          method: 'POST',
+          body: uploadFormData,
+        });
+  
         const data = await response.json();
 
+        const { error: insertError } = await supabase
+        .from('influencers')
+        .update({ avatar: data.secure_url })
+        .eq("uuid", profile.uuid);
+
+      if (insertError) throw insertError;
+  
         if (data.secure_url) {
           setProfile((prev) => ({
             ...prev,
-            avatar: data.secure_url, // Save Cloudinary URL
+            avatar: data.secure_url,
           }));
         } else {
           throw new Error('Upload failed');
@@ -202,34 +208,87 @@ export default function ProfileScreen() {
   const addNewContent = async () => {
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.All, // Permet de sélectionner des images et des vidéos
+        mediaTypes: ImagePicker.MediaTypeOptions.all,
         allowsEditing: true,
         aspect: [9, 16],
         quality: 1,
       });
-
-      if (!result.canceled && result.assets && result.assets.length > 0) {
-        // Créer un nouveau contenu avec l'image/vidéo sélectionnée
-        const content: Content = {
+  
+      if (!result.canceled && result.assets.length > 0) {
+        const file = result.assets[0];
+  
+        // Prepare the file for upload to Cloudinary
+        let formData = new FormData();
+        formData.append("file", {
+          uri: file.uri,
+          type: "image/jpeg", // Adjust based on file.type
+          name: `content_${Date.now()}.jpg`,
+        });
+        formData.append("upload_preset", "ml_default");
+  
+        // Upload to Cloudinary
+        const cloudinaryResponse = await fetch('https://api.cloudinary.com/v1_1/dqzknasup/image/upload', {
+          method: "POST",
+          body: formData,
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+  
+        const cloudinaryData = await cloudinaryResponse.json();
+  
+        if (!cloudinaryData.secure_url) {
+          throw new Error("Cloudinary upload failed");
+        }
+  
+        const newContent = {
           id: Date.now().toString(),
-          type: result.assets[0].type === 'video' ? 'reel' : 'post',
-          image: result.assets[0].uri,
+          type: file.type === 'video' ? 'reel' : 'post',
+          image: cloudinaryData.secure_url,
         };
-
-        // Ajouter le contenu au profil
-        setProfile((prev) => ({
+  
+        // Update in Supabase (Append new content to existing array)
+        const { data: existingProfile, error: fetchError } = await supabase
+          .from('influencers')
+          .select('contents')
+          .eq("uuid", profile.uuid)
+          .single();
+  
+        if (fetchError) throw fetchError;
+  
+        const updatedContents = existingProfile?.contents ? [...existingProfile.contents, newContent] : [newContent];
+  
+        const { error: updateError } = await supabase
+          .from('influencers')
+          .update({ contents: updatedContents })
+          .eq("uuid", profile.uuid);
+  
+        if (updateError) throw updateError;
+  
+        // Update local state
+        setProfile(prev => ({
           ...prev,
-          contents: [content, ...prev.contents],
+          contents: updatedContents,
         }));
+  
+        Alert.alert('Success', 'Media uploaded successfully!');
       }
     } catch (error) {
-      Alert.alert('Erreur', 'Impossible de sélectionner un média');
+      console.error("Error:", error);
+      Alert.alert('Error', 'Failed to upload media');
     }
   };
 
   // Fonction pour supprimer un contenu immédiatement
-  const deleteContent = (id: string) => {
-    setProfile((prev) => ({
+  const deleteContent = async (id: string) => {
+    const { error: updateError } = await supabase
+      .from('influencers')
+      .update({
+         contents: (prev) => ({
+           data: prev.contents.filter((content) => content.id!== id),
+         }),
+       })
+      .eq("uuid", profile.uuid);
+
+    setProfile(prev => ({
       ...prev,
       contents: prev.contents.filter((content) => content.id !== id),
     }));

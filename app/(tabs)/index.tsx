@@ -137,44 +137,16 @@ const NotificationsModal = ({
 const PlaceList = ({
   title,
   data,
-  userId,
   isLastSection = false,
   fullWidth = false,
 }) => {
-  const { user, fetchFavorites } = useApp();
+  const { user, fetchFavorites, toggleFavorite, favoriteIds } = useApp();
   const router = useRouter();
-  const [favoriteIds, setFavoriteIds] = useState([]);
 
   useEffect(() => {
     if (!user?.uuid) return;
-    const fetchFavorites = async () => {
-      const { data, error } = await supabase
-        .from('favorites')
-        .select('place_id')
-        .eq('user_id', user?.uuid);
-      if (!error) setFavoriteIds(data.map((fav) => fav.place_id));
-    };
     fetchFavorites();
   }, [user?.uuid]);
-
-  const toggleFavorite = async (place) => {
-    if (!user?.uuid) return;
-    const isFavorite = favoriteIds.includes(place.id);
-    if (isFavorite) {
-      const { error } = await supabase
-        .from('favorites')
-        .delete()
-        .eq('user_id', user?.uuid)
-        .eq('place_id', place.id);
-      if (!error)
-        setFavoriteIds((prev) => prev.filter((id) => id !== place.id));
-    } else {
-      const { error } = await supabase
-        .from('favorites')
-        .insert([{ user_id: user?.uuid, place_id: place.id }]);
-      if (!error) setFavoriteIds((prev) => [...prev, place.id]);
-    }
-  };
 
   return (
     <>

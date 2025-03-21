@@ -1,12 +1,23 @@
-import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  Image,
+  TouchableOpacity,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Heart, MapPin } from 'lucide-react-native';
-import { useFavorites } from '../../hooks/useFavorites';
+import { useApp } from '../context/useContext';
 
 export default function FavoritesScreen() {
-  const { favorites, toggleFavorite } = useFavorites();
+  const { toggleFavorite, favoriteIds, establishers } = useApp();
 
-  if (favorites.length === 0) {
+  const favoriteEstablishers = establishers.filter((est) =>
+    favoriteIds.includes(est.id)
+  );
+
+  if (favoriteEstablishers?.length === 0) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
@@ -26,7 +37,7 @@ export default function FavoritesScreen() {
       </View>
       <ScrollView style={styles.content}>
         <View style={styles.placesContainer}>
-          {favorites.map((place) => (
+          {favoriteEstablishers?.map((place) => (
             <TouchableOpacity
               key={place.id}
               style={styles.placeCard}
@@ -42,7 +53,11 @@ export default function FavoritesScreen() {
                 </View>
                 <Text style={styles.placeType}>{place.type}</Text>
                 <View style={styles.locationRow}>
-                  <MapPin size={13} color="#8e8e93" style={styles.locationIcon} />
+                  <MapPin
+                    size={13}
+                    color="#8e8e93"
+                    style={styles.locationIcon}
+                  />
                   <Text style={styles.placeLocation}>{place.location}</Text>
                 </View>
               </View>

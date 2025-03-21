@@ -42,11 +42,16 @@ interface ContextType {
   loading: boolean;
   reservations: string[];
   conversations: string[];
+  favorites: string[];
+  favoriteIds: string[];
+  setFavoriteIds: (ids: string[]) => void;
   setConversations: string[];
+  setFavorites: string[];
   fetchEstablishments: () => void;
   fetchReservations: () => void;
   fetchConversations: () => void;
   fetchFavorites: () => void;
+  toggleFavorite: (place: any) => void;
 }
 
 const Context = createContext<ContextType | undefined>(undefined);
@@ -58,6 +63,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [reservations, setReservations] = useState([]);
   const [conversations, setConversations] = useState([]);
   const [favorites, setFavorites] = useState([]);
+  const [favoriteIds, setFavoriteIds] = useState([]);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -140,20 +146,35 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   }
 
   const fetchFavorites = async () => {
-    const { data: favoritesData, error: favoritesError } = await supabase
-        .from("favorites")
-        .select('place_id')
-        .eq('user_id', user?.uuid)
+    const { data, error } = await supabase
+      .from('favorites')
+      .select('place_id')
+      .eq('user_id', user?.uuid);
 
-      if (favoritesError || !favoritesData) {
-        setFavorites(null);
+    if (!error) setFavoriteIds(data.map((fav) => fav.place_id));
+  };
+
+  const toggleFavorite = async (place) => {
+      if (!user?.uuid) return;
+      const isFavorite = favoriteIds.includes(place.id);
+      if (isFavorite) {
+        const { error } = await supabase
+          .from('favorites')
+          .delete()
+          .eq('user_id', user?.uuid)
+          .eq('place_id', place.id);
+        if (!error)
+          setFavoriteIds((prev) => prev.filter((id) => id !== place.id));
       } else {
-        setFavorites(favoritesData);
+        const { error } = await supabase
+          .from('favorites')
+          .insert([{ user_id: user?.uuid, place_id: place.id }]);
+        if (!error) setFavoriteIds((prev) => [...prev, place.id]);
       }
-  }
+    };
 
   return (
-    <Context.Provider value={{ user, loading, establishers, reservations, conversations, setConversations, fetchConversations, fetchEstablishments, fetchReservations, fetchFavorites }}>
+    <Context.Provider value={{ user, loading, establishers, reservations, conversations, favoriteIds, setConversations, fetchConversations, fetchEstablishments, fetchReservations, fetchFavorites, toggleFavorite }}>
       {children}
     </Context.Provider>
   );
