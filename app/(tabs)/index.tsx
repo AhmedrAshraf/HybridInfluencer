@@ -1,5 +1,21 @@
-import { View, Text, StyleSheet, TextInput, ScrollView, Image, TouchableOpacity, Modal } from 'react-native';
-import { Bell, Search, Heart, MapPin, X, Navigation } from 'lucide-react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TextInput,
+  ScrollView,
+  Image,
+  TouchableOpacity,
+  Modal,
+} from 'react-native';
+import {
+  Bell,
+  Search,
+  Heart,
+  MapPin,
+  X,
+  Navigation,
+} from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 import { useEffect, useState } from 'react';
@@ -19,34 +35,40 @@ const CategoryIcon = ({ path, color }: { path: string; color: string }) => (
 );
 
 const categories = [
-  { 
-    id: 'restaurants', 
+  {
+    id: 'restaurants',
     name: 'Restaurants',
-    path: 'M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7zm5-3v8h2.5v8H21V2c-2.76 0-5 2.24-5 4z'
+    path: 'M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7zm5-3v8h2.5v8H21V2c-2.76 0-5 2.24-5 4z',
   },
-  { 
-    id: 'hotels', 
+  {
+    id: 'hotels',
     name: 'Hôtels',
-    path: 'M7 14c1.66 0 3-1.34 3-3S8.66 8 7 8s-3 1.34-3 3 1.34 3 3 3zm0-4c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm12-3h-8v8H3V5H1v15h2v-3h18v3h2v-9c0-2.21-1.79-4-4-4zm2 8h-8V9h6c1.1 0 2 .9 2 2v4z'
+    path: 'M7 14c1.66 0 3-1.34 3-3S8.66 8 7 8s-3 1.34-3 3 1.34 3 3 3zm0-4c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm12-3h-8v8H3V5H1v15h2v-3h18v3h2v-9c0-2.21-1.79-4-4-4zm2 8h-8V9h6c1.1 0 2 .9 2 2v4z',
   },
-  { 
-    id: 'airbnb', 
+  {
+    id: 'airbnb',
     name: 'Airbnb',
-    path: 'M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z'
+    path: 'M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z',
   },
-  { 
-    id: 'wellness', 
+  {
+    id: 'wellness',
     name: 'Bien-être',
-    path: 'M12 2c-5.33 4.55-8 8.48-8 11.8 0 4.98 3.8 8.2 8 8.2s8-3.22 8-8.2c0-3.32-2.67-7.25-8-11.8zM12 20c-3.35 0-6-2.57-6-6.2 0-2.34 1.95-5.44 6-9.14 4.05 3.7 6 6.79 6 9.14 0 3.63-2.65 6.2-6 6.2zm-4.17-6c.37 0 .67.26.74.62.41 2.22 2.28 2.98 3.64 2.87.43-.02.79.32.79.75 0 .4-.32.73-.72.75-2.13.13-4.62-1.09-5.19-4.12-.08-.45.28-.87.74-.87z'
+    path: 'M12 2c-5.33 4.55-8 8.48-8 11.8 0 4.98 3.8 8.2 8 8.2s8-3.22 8-8.2c0-3.32-2.67-7.25-8-11.8zM12 20c-3.35 0-6-2.57-6-6.2 0-2.34 1.95-5.44 6-9.14 4.05 3.7 6 6.79 6 9.14 0 3.63-2.65 6.2-6 6.2zm-4.17-6c.37 0 .67.26.74.62.41 2.22 2.28 2.98 3.64 2.87.43-.02.79.32.79.75 0 .4-.32.73-.72.75-2.13.13-4.62-1.09-5.19-4.12-.08-.45.28-.87.74-.87z',
   },
-  { 
-    id: 'activities', 
+  {
+    id: 'activities',
     name: 'Activités',
-    path: 'M13.49 5.48c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm-3.6 13.9l1-4.4 2.1 2v6h2v-7.5l-2.1-2 .6-3c1.3 1.5 3.3 2.5 5.5 2.5v-2c-1.9 0-3.5-1-4.3-2.4l-1-1.6c-.4-.6-1-1-1.7-1-.3 0-.5.1-.8.1l-5.2 2.2v4.7h2v-3.4l1.8-.7-1.6 8.1-4.9-1-.4 2 7 1.4z'
-  }
+    path: 'M13.49 5.48c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm-3.6 13.9l1-4.4 2.1 2v6h2v-7.5l-2.1-2 .6-3c1.3 1.5 3.3 2.5 5.5 2.5v-2c-1.9 0-3.5-1-4.3-2.4l-1-1.6c-.4-.6-1-1-1.7-1-.3 0-.5.1-.8.1l-5.2 2.2v4.7h2v-3.4l1.8-.7-1.6 8.1-4.9-1-.4 2 7 1.4z',
+  },
 ];
 
-const LocationModal = ({ visible, onClose }: { visible: boolean; onClose: () => void }) => (
+const LocationModal = ({
+  visible,
+  onClose,
+}: {
+  visible: boolean;
+  onClose: () => void;
+}) => (
   <Modal visible={visible} animationType="slide" transparent>
     <View style={styles.modalOverlay}>
       <View style={styles.modalContent}>
@@ -56,7 +78,7 @@ const LocationModal = ({ visible, onClose }: { visible: boolean; onClose: () => 
             <X size={20} color={TEXT_COLOR} />
           </TouchableOpacity>
         </View>
-        
+
         <TouchableOpacity style={styles.locationOption}>
           <Navigation size={20} color={ACCENT_COLOR} />
           <Text style={styles.locationOptionText}>Me géolocaliser</Text>
@@ -82,7 +104,13 @@ const LocationModal = ({ visible, onClose }: { visible: boolean; onClose: () => 
   </Modal>
 );
 
-const NotificationsModal = ({ visible, onClose }: { visible: boolean; onClose: () => void }) => (
+const NotificationsModal = ({
+  visible,
+  onClose,
+}: {
+  visible: boolean;
+  onClose: () => void;
+}) => (
   <Modal visible={visible} animationType="slide" transparent>
     <View style={styles.modalOverlay}>
       <View style={styles.modalContent}>
@@ -92,12 +120,13 @@ const NotificationsModal = ({ visible, onClose }: { visible: boolean; onClose: (
             <X size={20} color={TEXT_COLOR} />
           </TouchableOpacity>
         </View>
-        
+
         <View style={styles.emptyNotifications}>
           <Bell size={40} color={ICON_COLOR} />
           <Text style={styles.emptyNotificationsText}>Aucune notification</Text>
           <Text style={styles.emptyNotificationsSubtext}>
-            Vous recevrez des notifications sur les nouveaux établissements et vos réservations
+            Vous recevrez des notifications sur les nouveaux établissements et
+            vos réservations
           </Text>
         </View>
       </View>
@@ -105,7 +134,13 @@ const NotificationsModal = ({ visible, onClose }: { visible: boolean; onClose: (
   </Modal>
 );
 
-const PlaceList = ({ title, data, userId, isLastSection = false, fullWidth = false }) => {
+const PlaceList = ({
+  title,
+  data,
+  userId,
+  isLastSection = false,
+  fullWidth = false,
+}) => {
   const { user, fetchFavorites } = useApp();
   const router = useRouter();
   const [favoriteIds, setFavoriteIds] = useState([]);
@@ -113,7 +148,10 @@ const PlaceList = ({ title, data, userId, isLastSection = false, fullWidth = fal
   useEffect(() => {
     if (!user?.uuid) return;
     const fetchFavorites = async () => {
-      const { data, error } = await supabase.from('favorites').select('place_id').eq('user_id', user?.uuid);
+      const { data, error } = await supabase
+        .from('favorites')
+        .select('place_id')
+        .eq('user_id', user?.uuid);
       if (!error) setFavoriteIds(data.map((fav) => fav.place_id));
     };
     fetchFavorites();
@@ -123,10 +161,17 @@ const PlaceList = ({ title, data, userId, isLastSection = false, fullWidth = fal
     if (!user?.uuid) return;
     const isFavorite = favoriteIds.includes(place.id);
     if (isFavorite) {
-      const { error } = await supabase.from('favorites').delete().eq('user_id', user?.uuid).eq('place_id', place.id);
-      if (!error) setFavoriteIds((prev) => prev.filter((id) => id !== place.id));
+      const { error } = await supabase
+        .from('favorites')
+        .delete()
+        .eq('user_id', user?.uuid)
+        .eq('place_id', place.id);
+      if (!error)
+        setFavoriteIds((prev) => prev.filter((id) => id !== place.id));
     } else {
-      const { error } = await supabase.from('favorites').insert([{ user_id: user?.uuid, place_id: place.id }]);
+      const { error } = await supabase
+        .from('favorites')
+        .insert([{ user_id: user?.uuid, place_id: place.id }]);
       if (!error) setFavoriteIds((prev) => [...prev, place.id]);
     }
   };
@@ -147,26 +192,41 @@ const PlaceList = ({ title, data, userId, isLastSection = false, fullWidth = fal
                 activeOpacity={0.8}
                 onPress={() => router.push(`/(tabs)/${place.id}`)}
               >
-                <Image source={{ uri: place.image }} style={styles.fullWidthImage} />
+                <Image
+                  source={{ uri: place.image }}
+                  style={styles.fullWidthImage}
+                />
                 <View style={styles.fullWidthInfo}>
                   <View style={styles.nameRow}>
                     <Text style={styles.placeName}>{place.name}</Text>
-                    <TouchableOpacity 
+                    <TouchableOpacity
                       onPress={(e) => {
                         e.stopPropagation();
                         toggleFavorite(place);
                       }}
                     >
-                      <Heart 
-                        size={16} 
-                        color={favoriteIds.includes(place.id) ? ACCENT_COLOR : ICON_COLOR}
-                        fill={favoriteIds.includes(place.id) ? ACCENT_COLOR : 'transparent'}
+                      <Heart
+                        size={16}
+                        color={
+                          favoriteIds.includes(place.id)
+                            ? ACCENT_COLOR
+                            : ICON_COLOR
+                        }
+                        fill={
+                          favoriteIds.includes(place.id)
+                            ? ACCENT_COLOR
+                            : 'transparent'
+                        }
                       />
                     </TouchableOpacity>
                   </View>
                   <Text style={styles.placeType}>{place.type}</Text>
                   <View style={styles.locationRow}>
-                    <MapPin size={13} color={ICON_COLOR} style={styles.locationIcon} />
+                    <MapPin
+                      size={13}
+                      color={ICON_COLOR}
+                      style={styles.locationIcon}
+                    />
                     <Text style={styles.placeLocation}>{place.location}</Text>
                   </View>
                 </View>
@@ -179,33 +239,48 @@ const PlaceList = ({ title, data, userId, isLastSection = false, fullWidth = fal
             showsHorizontalScrollIndicator={false}
             style={styles.trendingContainer}
           >
-            {data.map((place) => (
+            {data.map((place: any) => (
               <TouchableOpacity
                 key={place.id}
                 style={styles.trendingCard}
                 activeOpacity={0.8}
-                onPress={() => router.push(/(tabs)/${place.id})}
+                onPress={() => router.push(`/(tabs)/${place.id}`)}
               >
-                <Image source={{ uri: place.image }} style={styles.trendingImage} />
+                <Image
+                  source={{ uri: place.image }}
+                  style={styles.trendingImage}
+                />
                 <View style={styles.trendingInfo}>
                   <View style={styles.nameRow}>
                     <Text style={styles.placeName}>{place.name}</Text>
-                    <TouchableOpacity 
+                    <TouchableOpacity
                       onPress={(e) => {
                         e.stopPropagation();
                         toggleFavorite(place);
                       }}
                     >
-                      <Heart 
-                        size={16} 
-                        color={favoriteIds.includes(place.id) ? ACCENT_COLOR : ICON_COLOR}
-                        fill={favoriteIds.includes(place.id) ? ACCENT_COLOR : 'transparent'}
+                      <Heart
+                        size={16}
+                        color={
+                          favoriteIds.includes(place.id)
+                            ? ACCENT_COLOR
+                            : ICON_COLOR
+                        }
+                        fill={
+                          favoriteIds.includes(place.id)
+                            ? ACCENT_COLOR
+                            : 'transparent'
+                        }
                       />
                     </TouchableOpacity>
                   </View>
                   <Text style={styles.placeType}>{place.type}</Text>
                   <View style={styles.locationRow}>
-                    <MapPin size={13} color={ICON_COLOR} style={styles.locationIcon} />
+                    <MapPin
+                      size={13}
+                      color={ICON_COLOR}
+                      style={styles.locationIcon}
+                    />
                     <Text style={styles.placeLocation}>{place.location}</Text>
                   </View>
                 </View>
@@ -222,23 +297,26 @@ const PlaceList = ({ title, data, userId, isLastSection = false, fullWidth = fal
 export default function ExploreScreen() {
   const router = useRouter();
   const [locationModalVisible, setLocationModalVisible] = useState(false);
-  const [notificationsModalVisible, setNotificationsModalVisible] = useState(false);
+  const [notificationsModalVisible, setNotificationsModalVisible] =
+    useState(false);
   const [selectedCategory, setSelectedCategory] = useState('restaurants');
 
   const { establishers, fetchEstablishments } = useApp();
 
   useEffect(() => {
     fetchEstablishments();
-  }, [])
+  }, []);
 
-  const filteredPlaces = establishers.filter(place => place.category === selectedCategory);
-  const trendingPlaces = filteredPlaces.filter(place => place.trending);
-  const newPlaces = filteredPlaces.filter(place => place.isNew);
+  const filteredPlaces = establishers.filter(
+    (place) => place.category === selectedCategory
+  );
+  const trendingPlaces = filteredPlaces.filter((place) => place.trending);
+  const newPlaces = filteredPlaces.filter((place) => place.isNew);
 
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.locationContainer}
           onPress={() => setLocationModalVisible(true)}
         >
@@ -282,22 +360,34 @@ export default function ExploreScreen() {
                 key={category.id}
                 style={[
                   styles.categoryButton,
-                  selectedCategory === category.id && styles.categoryButtonSelected
+                  selectedCategory === category.id &&
+                    styles.categoryButtonSelected,
                 ]}
                 activeOpacity={0.7}
                 onPress={() => setSelectedCategory(category.id)}
               >
                 <View style={styles.categoryIcon}>
-                  <CategoryIcon 
-                    path={category.path} 
-                    color={selectedCategory === category.id ? ACCENT_COLOR : ICON_COLOR} 
+                  <CategoryIcon
+                    path={category.path}
+                    color={
+                      selectedCategory === category.id
+                        ? ACCENT_COLOR
+                        : ICON_COLOR
+                    }
                   />
                 </View>
-                <Text style={[
-                  styles.categoryLabel,
-                  selectedCategory === category.id && styles.categoryLabelSelected
-                ]}>{category.name}</Text>
-                {selectedCategory === category.id && <View style={styles.categorySelectedBar} />}
+                <Text
+                  style={[
+                    styles.categoryLabel,
+                    selectedCategory === category.id &&
+                      styles.categoryLabelSelected,
+                  ]}
+                >
+                  {category.name}
+                </Text>
+                {selectedCategory === category.id && (
+                  <View style={styles.categorySelectedBar} />
+                )}
               </TouchableOpacity>
             ))}
           </ScrollView>
@@ -305,16 +395,21 @@ export default function ExploreScreen() {
 
         <PlaceList title="Tendances" data={trendingPlaces} />
         <PlaceList title="Nouveautés" data={newPlaces} />
-        <PlaceList title="Tous les établissements" data={filteredPlaces} isLastSection fullWidth />
+        <PlaceList
+          title="Tous les établissements"
+          data={filteredPlaces}
+          isLastSection
+          fullWidth
+        />
       </ScrollView>
 
-      <LocationModal 
-        visible={locationModalVisible} 
-        onClose={() => setLocationModalVisible(false)} 
+      <LocationModal
+        visible={locationModalVisible}
+        onClose={() => setLocationModalVisible(false)}
       />
-      <NotificationsModal 
-        visible={notificationsModalVisible} 
-        onClose={() => setNotificationsModalVisible(false)} 
+      <NotificationsModal
+        visible={notificationsModalVisible}
+        onClose={() => setNotificationsModalVisible(false)}
       />
     </SafeAreaView>
   );
@@ -562,7 +657,7 @@ const styles = StyleSheet.create({
     color: TEXT_COLOR,
   },
   closeButton: {
-     padding: 4,
+    padding: 4,
   },
   locationOption: {
     flexDirection: 'row',

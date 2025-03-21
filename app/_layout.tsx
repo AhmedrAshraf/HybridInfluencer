@@ -2,12 +2,24 @@ import { useEffect } from "react";
 import { Stack, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { AppProvider, useApp } from "../app/context/useContext";
+// import * as Device from 'expo-device';
+// import * as Notifications from 'expo-notifications';
+// import Constants from 'expo-constants';
+
+// Notifications.setNotificationHandler({
+//   handleNotification: async () => ({
+//     shouldShowAlert: true,
+//     shouldPlaySound: false,
+//     shouldSetBadge: false,
+//   }),
+// });
 
 declare global {
   interface Window {
     frameworkReady?: () => void;
   }
 }
+
 
 function RootLayoutInner() {
   const router = useRouter();
