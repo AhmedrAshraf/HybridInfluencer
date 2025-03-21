@@ -16,14 +16,15 @@ import { Ionicons } from '@expo/vector-icons';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import { supabase } from '@/utils/supabase';
 import { useRouter } from 'expo-router';
+import { registerForPushNotificationsAsync } from '../../hooks/NotificationProvider';
 
 export default function SignupScreen({ navigation }: any) {
-  const [email, setEmail] = useState('');
+  const router = useRouter();
   const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const router = useRouter();
 
   async function signUpWithEmail() {
     if (!email || !password || !name) {
@@ -38,6 +39,8 @@ export default function SignupScreen({ navigation }: any) {
 
     setLoading(true);
     try {
+      const token = await registerForPushNotificationsAsync();
+  
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -51,6 +54,7 @@ export default function SignupScreen({ navigation }: any) {
             name: name,
             status: 'pending',
             role: 'influencer',
+            token,
           },
         ]);
 
@@ -85,10 +89,10 @@ export default function SignupScreen({ navigation }: any) {
     >
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <View style={styles.logoContainer}>
-          <Image
+          {/* <Image
             source={{ uri: 'https://placeholder.svg?height=100&width=100' }}
             style={styles.logo}
-          />
+          /> */}
           <Text style={styles.appName}>Influencer App</Text>
         </View>
 

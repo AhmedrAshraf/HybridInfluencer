@@ -1,6 +1,28 @@
-import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, TextInput, Modal, Alert, Platform } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Image,
+  TouchableOpacity,
+  ScrollView,
+  TextInput,
+  Modal,
+  Alert,
+  Platform,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Instagram, Eye, Users, Briefcase, Camera, X, Check, Link, Plus, Trash2 } from 'lucide-react-native';
+import {
+  Instagram,
+  Eye,
+  Users,
+  Briefcase,
+  Camera,
+  X,
+  Check,
+  Link,
+  Plus,
+  Trash2,
+} from 'lucide-react-native';
 import { useState, useRef, useEffect } from 'react';
 import Svg, { Path } from 'react-native-svg';
 import * as ImagePicker from 'expo-image-picker';
@@ -62,19 +84,22 @@ export default function ProfileScreen() {
   const [nameInput, setNameInput] = useState(profile?.name || '');
   const [usernameInput, setUsernameInput] = useState(profile?.username || '');
   const [bioInput, setBioInput] = useState(profile?.bio || '');
-  const [instagramInput, setInstagramInput] = useState(profile?.instagramUrl || '');
+  const [instagramInput, setInstagramInput] = useState(
+    profile?.instagramUrl || ''
+  );
   const [tiktokInput, setTiktokInput] = useState(profile?.tiktokUrl || '');
   const [collaborationsInput, setCollaborationsInput] = useState(0);
   const [viewsInput, setViewsInput] = useState(0);
   const [followersInput, setFollowersInput] = useState(0);
-  
+
   // État pour l'ajout de contenu
   const [addContentModalVisible, setAddContentModalVisible] = useState(false);
   const [newContent, setNewContent] = useState<Partial<Content>>({
     type: 'post',
-    image: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'
+    image:
+      'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80',
   });
-  
+
   // Référence pour le scroll
   const scrollViewRef = useRef<ScrollView>(null);
 
@@ -94,7 +119,7 @@ export default function ProfileScreen() {
   // Fonction pour sauvegarder les modifications
   const saveProfile = async () => {
     if (!profile) return;
-  
+
     const updatedProfile = {
       ...profile,
       name: nameInput,
@@ -106,21 +131,21 @@ export default function ProfileScreen() {
       // views: parseInt(viewsInput) || 0,
       // followers: parseInt(followersInput) || 0
     };
-  
+
     try {
       const { error } = await supabase
-        .from("influencers")
+        .from('influencers')
         .update(updatedProfile)
-        .eq("uuid", profile.uuid); // Make sure to use the correct user ID field
-  
+        .eq('uuid', profile.uuid); // Make sure to use the correct user ID field
+
       if (error) throw error;
-  
+
       setProfile(updatedProfile); // Update local state after successful update
       setIsEditing(false);
     } catch (error: any) {
-      console.error("Error updating profile:", error.message);
+      console.error('Error updating profile:', error.message);
     }
-  };  
+  };
 
   // Fonction pour annuler les modifications
   const cancelEditing = () => {
@@ -136,36 +161,39 @@ export default function ProfileScreen() {
         aspect: [1, 1],
         quality: 0.2,
       });
-  
+
       if (!result.canceled && result.assets && result.assets.length > 0) {
         const imageUri = result.assets[0].uri;
-  
-        const formData = new FormData();
-        formData.append("file", {
+
+        const formData: any = new FormData();
+        formData.append('file', {
           uri: imageUri,
-          type: "image/jpeg", // Adjust based on file type
-          name: "upload.jpg",
+          type: 'image/jpeg', // Adjust based on file type
+          name: 'upload.jpg',
         });
-        formData.append("upload_preset", 'ml_default');
-  
-        const response = await fetch('https://api.cloudinary.com/v1_1/dqzknasup/image/upload', {
-          method: "POST",
-          body: formData,
-        });
-  
+        formData.append('upload_preset', 'ml_default');
+
+        const response = await fetch(
+          'https://api.cloudinary.com/v1_1/dqzknasup/image/upload',
+          {
+            method: 'POST',
+            body: formData,
+          }
+        );
+
         const data = await response.json();
-  
+
         if (data.secure_url) {
-          setProfile(prev => ({
+          setProfile((prev) => ({
             ...prev,
             avatar: data.secure_url, // Save Cloudinary URL
           }));
         } else {
-          throw new Error("Upload failed");
+          throw new Error('Upload failed');
         }
       }
     } catch (error) {
-      Alert.alert("Error", "Image upload failed");
+      Alert.alert('Error', 'Image upload failed');
       console.error(error);
     }
   };
@@ -185,13 +213,13 @@ export default function ProfileScreen() {
         const content: Content = {
           id: Date.now().toString(),
           type: result.assets[0].type === 'video' ? 'reel' : 'post',
-          image: result.assets[0].uri
+          image: result.assets[0].uri,
         };
 
         // Ajouter le contenu au profil
-        setProfile(prev => ({
+        setProfile((prev) => ({
           ...prev,
-          contents: [content, ...prev.contents]
+          contents: [content, ...prev.contents],
         }));
       }
     } catch (error) {
@@ -201,9 +229,9 @@ export default function ProfileScreen() {
 
   // Fonction pour supprimer un contenu immédiatement
   const deleteContent = (id: string) => {
-    setProfile(prev => ({
+    setProfile((prev) => ({
       ...prev,
-      contents: prev.contents.filter(content => content.id !== id)
+      contents: prev.contents.filter((content) => content.id !== id),
     }));
   };
 
@@ -233,39 +261,37 @@ export default function ProfileScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView 
-        style={styles.scrollView}
-        ref={scrollViewRef}
-      >
+      <ScrollView style={styles.scrollView} ref={scrollViewRef}>
         <View style={styles.header}>
           <View style={styles.headerTop}>
             <Text style={styles.headerTitle}>Profil</Text>
             {!isEditing ? (
               <>
-              <TouchableOpacity 
-                style={styles.editButton}
-                onPress={enableEditing}
-              >
-                <Text style={styles.editButtonText}>Modifier</Text>
-              </TouchableOpacity>
-              <TouchableOpacity 
-              style={styles.editButton}
-              onPress={() => {
-                supabase.auth.signOut()
-                router.push('/auth/login')
-              }}
-            >
-              <Text style={styles.editButtonText}>Logout</Text>
-            </TouchableOpacity></>
+                <TouchableOpacity
+                  style={styles.editButton}
+                  onPress={enableEditing}
+                >
+                  <Text style={styles.editButtonText}>Modifier</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.editButton}
+                  onPress={() => {
+                    supabase.auth.signOut();
+                    router.push('/auth/login');
+                  }}
+                >
+                  <Text style={styles.editButtonText}>Logout</Text>
+                </TouchableOpacity>
+              </>
             ) : (
               <View style={styles.editActions}>
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.cancelButton}
                   onPress={cancelEditing}
                 >
                   <X size={18} color="#f46d63" />
                 </TouchableOpacity>
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.saveButton}
                   onPress={saveProfile}
                 >
@@ -274,17 +300,17 @@ export default function ProfileScreen() {
               </View>
             )}
           </View>
-          
+
           <View style={styles.profileHeader}>
             <View style={styles.avatarContainer}>
               {profile?.avatar && (
-                <Image 
-                  source={{ uri: profile?.avatar }} 
-                  style={styles.avatar} 
+                <Image
+                  source={{ uri: profile?.avatar }}
+                  style={styles.avatar}
                 />
               )}
               {isEditing && (
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.changeAvatarButton}
                   onPress={pickImage}
                 >
@@ -292,7 +318,7 @@ export default function ProfileScreen() {
                 </TouchableOpacity>
               )}
             </View>
-            
+
             <View style={styles.profileInfo}>
               {isEditing ? (
                 <TextInput
@@ -305,7 +331,7 @@ export default function ProfileScreen() {
               ) : (
                 <Text style={styles.profileName}>{profile?.name}</Text>
               )}
-              
+
               {isEditing ? (
                 <TextInput
                   style={styles.usernameInput}
@@ -320,12 +346,16 @@ export default function ProfileScreen() {
               )}
             </View>
           </View>
-          
+
           <View style={styles.socialLinksContainer}>
             {isEditing ? (
               <View style={styles.socialInputsContainer}>
                 <View style={styles.socialInputWrapper}>
-                  <Instagram size={18} color="#E1306C" style={styles.socialInputIcon} />
+                  <Instagram
+                    size={18}
+                    color="#E1306C"
+                    style={styles.socialInputIcon}
+                  />
                   <TextInput
                     style={styles.socialInput}
                     value={instagramInput}
@@ -335,9 +365,13 @@ export default function ProfileScreen() {
                     autoCapitalize="none"
                   />
                 </View>
-                
+
                 <View style={styles.socialInputWrapper}>
-                  <TikTokLogo size={18} color="#000" style={styles.socialInputIcon} />
+                  <TikTokLogo
+                    size={18}
+                    color="#000"
+                    style={styles.socialInputIcon}
+                  />
                   <TextInput
                     style={styles.socialInput}
                     value={tiktokInput}
@@ -350,25 +384,33 @@ export default function ProfileScreen() {
               </View>
             ) : (
               <>
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.instagramButton}
-                  onPress={() => Alert.alert('Instagram', 'Redirection vers Instagram')}
+                  onPress={() =>
+                    Alert.alert('Instagram', 'Redirection vers Instagram')
+                  }
                 >
                   <Instagram size={18} color="#fff" style={styles.socialIcon} />
                   <Text style={styles.instagramText}>Instagram</Text>
                 </TouchableOpacity>
-                
-                <TouchableOpacity 
+
+                <TouchableOpacity
                   style={styles.tiktokButton}
-                  onPress={() => Alert.alert('TikTok', 'Redirection vers TikTok')}
+                  onPress={() =>
+                    Alert.alert('TikTok', 'Redirection vers TikTok')
+                  }
                 >
-                  <TikTokLogo size={18} color="#fff" style={styles.socialIcon} />
+                  <TikTokLogo
+                    size={18}
+                    color="#fff"
+                    style={styles.socialIcon}
+                  />
                   <Text style={styles.tiktokText}>TikTok</Text>
                 </TouchableOpacity>
               </>
             )}
           </View>
-          
+
           <View style={styles.statsContainer}>
             <View style={styles.statItem}>
               <Briefcase size={18} color="#8e8e93" />
@@ -376,56 +418,68 @@ export default function ProfileScreen() {
                 <TextInput
                   style={styles.statInput}
                   value={collaborationsInput}
-                  onChangeText={(text) => formatNumberInput(text, setCollaborationsInput)}
+                  onChangeText={(text) =>
+                    formatNumberInput(text, setCollaborationsInput)
+                  }
                   keyboardType="numeric"
                   placeholder="0"
                   placeholderTextColor="#999"
                 />
               ) : (
-                <Text style={styles.statValue}>{formatNumber(profile?.collaborations)}</Text>
+                <Text style={styles.statValue}>
+                  {formatNumber(profile?.collaborations)}
+                </Text>
               )}
               <Text style={styles.statLabel}>Collaborations</Text>
             </View>
-            
+
             <View style={styles.statDivider} />
-            
+
             <View style={styles.statItem}>
               <Eye size={18} color="#8e8e93" />
               {isEditing ? (
                 <TextInput
                   style={styles.statInput}
                   value={viewsInput}
-                  onChangeText={(text) => formatNumberInput(text, setViewsInput)}
+                  onChangeText={(text) =>
+                    formatNumberInput(text, setViewsInput)
+                  }
                   keyboardType="numeric"
                   placeholder="0"
                   placeholderTextColor="#999"
                 />
               ) : (
-                <Text style={styles.statValue}>{formatNumber(profile?.views)}</Text>
+                <Text style={styles.statValue}>
+                  {formatNumber(profile?.views)}
+                </Text>
               )}
               <Text style={styles.statLabel}>Vues</Text>
             </View>
-            
+
             <View style={styles.statDivider} />
-            
+
             <View style={styles.statItem}>
               <Users size={18} color="#8e8e93" />
               {isEditing ? (
                 <TextInput
                   style={styles.statInput}
                   value={followersInput}
-                  onChangeText={(text) => formatNumberInput(text, setFollowersInput)}
+                  onChangeText={(text) =>
+                    formatNumberInput(text, setFollowersInput)
+                  }
                   keyboardType="numeric"
                   placeholder="0"
                   placeholderTextColor="#999"
                 />
               ) : (
-                <Text style={styles.statValue}>{formatNumber(profile?.followers)}</Text>
+                <Text style={styles.statValue}>
+                  {formatNumber(profile?.followers)}
+                </Text>
               )}
               <Text style={styles.statLabel}>Abonnés</Text>
             </View>
           </View>
-          
+
           <View style={styles.bioSection}>
             <Text style={styles.sectionTitle}>À propos de moi</Text>
             {isEditing ? (
@@ -443,12 +497,12 @@ export default function ProfileScreen() {
             )}
           </View>
         </View>
-        
+
         <View style={styles.contentsSection}>
           <View style={styles.contentsSectionHeader}>
             <Text style={styles.sectionTitle}>Contenus créés</Text>
             {isEditing && (
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.addContentButton}
                 onPress={addNewContent}
               >
@@ -457,19 +511,19 @@ export default function ProfileScreen() {
               </TouchableOpacity>
             )}
           </View>
-          
+
           <View style={styles.contentsList}>
-            {profile?.contents?.map(content => (
-              <TouchableOpacity 
-                key={content.id} 
+            {profile?.contents?.map((content) => (
+              <TouchableOpacity
+                key={content.id}
                 style={styles.contentItemWrapper}
                 onPress={() => Alert.alert('Vidéo', 'Lecture de la vidéo')}
               >
                 <View style={styles.contentItem}>
                   {content.image && (
-                    <Image 
-                      source={{ uri: content.image }} 
-                      style={styles.contentImage} 
+                    <Image
+                      source={{ uri: content.image }}
+                      style={styles.contentImage}
                     />
                   )}
                   <View style={styles.playIconOverlay}>
@@ -478,7 +532,7 @@ export default function ProfileScreen() {
                     </View>
                   </View>
                   {isEditing && (
-                    <TouchableOpacity 
+                    <TouchableOpacity
                       style={styles.deleteContentButton}
                       onPress={() => deleteContent(content.id)}
                     >
@@ -761,7 +815,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     backgroundColor: '#000',
     position: 'relative',
-    aspectRatio: 9/16,
+    aspectRatio: 9 / 16,
   },
   contentImage: {
     width: '100%',
