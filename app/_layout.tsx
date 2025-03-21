@@ -2,17 +2,7 @@ import { useEffect } from 'react';
 import { Stack, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { AppProvider, useApp } from '../app/context/useContext';
-import * as Device from 'expo-device';
-import * as Notifications from 'expo-notifications';
-import Constants from 'expo-constants';
-
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: false,
-    shouldSetBadge: false,
-  }),
-});
+import NotificationProvider from '@/hooks/NotificationProvider';
 
 declare global {
   interface Window {
@@ -49,6 +39,7 @@ function RootLayoutInner() {
 export default function RootLayout() {
   return (
     <AppProvider>
+      <NotificationProvider />
       <RootLayoutInner />
     </AppProvider>
   );
