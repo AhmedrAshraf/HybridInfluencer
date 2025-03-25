@@ -21,11 +21,18 @@ import {
   CircleAlert as AlertCircle,
   Check,
 } from 'lucide-react-native';
+<<<<<<< Updated upstream
 import Map from 'react-map-gl';
 import { useState, useMemo } from 'react';
+=======
+import MapView, { Marker } from 'react-native-maps';
+import { useState, useMemo, useEffect } from 'react';
+import { useFavorites } from '../../hooks/useFavorites';
+>>>>>>> Stashed changes
 import { useReservations } from '../../hooks/useReservations';
 import { useApp } from '../context/useContext';
 import { supabase } from '@/utils/supabase';
+import { sendPushNotification } from '@/hooks/NotificationProvider';
 
 const ACCENT_COLOR = '#f46d63';
 const ICON_COLOR = '#8e8e93';
@@ -135,6 +142,11 @@ export default function PlaceDetails() {
   const [reservationModalVisible, setReservationModalVisible] = useState(false);
   const [reservationSuccess, setReservationSuccess] = useState(false);
 
+  const [coordinates, setCoordinates] = useState({
+    latitude: 43.2965, // Default location: Marseille
+    longitude: 5.3698,
+  });
+
   // États pour le formulaire de réservation
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedTime, setSelectedTime] = useState('');
@@ -235,6 +247,33 @@ export default function PlaceDetails() {
         return;
       }
 
+      const { data: ownerData, error: ownerError } = await supabase
+        .from('establishers')
+        .select('token')
+        .eq('id', id)
+        .single();
+
+      if (ownerError) {
+        console.error(
+          'Error fetching establishment owner:',
+          ownerError.message
+        );
+        return;
+      }
+
+      // Check if the owner has a push token
+      const ownerPushToken = ownerData?.token;
+      if (ownerPushToken) {
+        await sendPushNotification(
+          ownerPushToken,
+          'Nouvelle réservation 🏨',
+          `${user?.name} a réservé une place pour ${selectedDate} à ${selectedTime}`,
+          { reservationId: newReservation.id }
+        );
+      } else {
+        console.warn('Establishment owner does not have a push token.');
+      }
+
       // Add the reservation to Zustand state
       addReservation(newReservation);
 
@@ -263,6 +302,30 @@ export default function PlaceDetails() {
   };
 
   const place: any = establishers.find((p) => p.id == id);
+
+  useEffect(() => {
+    if (!place?.location) return;
+
+    const fetchCoordinates = async () => {
+      try {
+        const response = await fetch(
+          `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(
+            place?.location
+          )}.json?access_token=${MAPBOX_TOKEN}`
+        );
+        const data = await response.json();
+
+        if (data?.features?.length > 0) {
+          const [lng, lat] = data.features[0].center;
+          setCoordinates({ latitude: lat, longitude: lng });
+        }
+      } catch (error) {
+        console.error('Error fetching coordinates:', error);
+      }
+    };
+
+    fetchCoordinates();
+  }, [place?.location]);
 
   if (!place) return null;
 
@@ -293,7 +356,7 @@ export default function PlaceDetails() {
               />
             )}
             <View style={styles.dots}>
-              {place?.photos?.map((_:any, index:any) => (
+              {place?.photos?.map((_: any, index: any) => (
                 <TouchableOpacity
                   key={index}
                   onPress={() => setCurrentImageIndex(index)}
@@ -370,19 +433,20 @@ export default function PlaceDetails() {
             <Text style={styles.sectionTitle}>Où se situe l'établissement</Text>
             <View style={styles.addressContainer}>
               <MapPin size={20} color={ICON_COLOR} />
-              <Text style={styles.address}>{place.location}</Text>
+              <Text style={styles.address}>{place?.location}</Text>
             </View>
             <View style={styles.mapContainer}>
-              <Map
-                mapboxAccessToken={MAPBOX_TOKEN}
-                initialViewState={{
-                  longitude: 5.3698,
-                  latitude: 43.2965,
-                  zoom: 14,
-                }}
+              <MapView
                 style={styles.map}
-                mapStyle="mapbox://styles/mapbox/streets-v11"
-              />
+                initialRegion={{
+                  latitude: coordinates.latitude,
+                  longitude: coordinates.longitude,
+                  latitudeDelta: 0.05,
+                  longitudeDelta: 0.05,
+                }}
+              >
+                <Marker coordinate={coordinates} title={place?.location} />
+              </MapView>
             </View>
           </View>
 
