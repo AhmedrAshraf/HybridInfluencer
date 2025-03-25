@@ -28,7 +28,6 @@ import { styles } from '@/styles/Messages.style';
 export default function MessagesScreen() {
   const [establishers, setEstablishers] = useState<any[]>([]);
   const [activeEstablisher, setActiveEstablisher] = useState<any | null>(null);
-  console.log("🚀 ~ MessagesScreen ~ activeEstablisher:", activeEstablisher)
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
@@ -60,7 +59,6 @@ export default function MessagesScreen() {
       if (error) {
         console.error('Error fetching establishers:', error.message);
       } else {
-        console.log('🚀 ~ fetchEstablishers ~ data:', data[0]);
         setEstablishers(data.map((e) => ({ ...e, id: e.uid })));
       }
     };
@@ -71,31 +69,65 @@ export default function MessagesScreen() {
   const filteredEstablishers = establishers.filter((establisher) =>
     establisher.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
+  useEffect(() => {
+    if (!currentUser || !activeEstablisher) return;
 
-  const fetchMessages = async (establisherId: string) => {
-    console.log("🚀 ~ fetchMessages ~ establisherId:", establisherId)
-    console.log("🚀 ~ fetchMessages ~ currentUser.id:", currentUser.id)
-    if (!currentUser) return;
-    const { data, error } = await supabase
-      .from('messages')
-      .select('*')
-      .match({
-        influencer_id: currentUser.id,
-        establisher_id: establisherId,
-      })
-      .order('timestamp', { ascending: true });
-    if (error) {
-      console.error('Error fetching messages:', error);
-    } else {
-      console.log('🚀 ~ fetchMessages ~ data:', data);
-      setMessages(data);
-    }
-  };
+    let subscription: any;
+
+    const fetchAndSubscribe = async () => {
+      // Initial fetch
+      const { data, error } = await supabase
+        .from('messages')
+        .select('*')
+        .or(
+          `and(influencer_id.eq.${currentUser.id},establisher_id.eq.${activeEstablisher.id}),and(influencer_id.eq.${activeEstablisher.id},establisher_id.eq.${currentUser.id})`
+        )
+        .order('timestamp', { ascending: true });
+
+      if (error) {
+        console.error('Error fetching messages:', error);
+      } else {
+        setMessages(data || []);
+      }
+
+      // Realtime subscription
+      subscription = supabase
+        .channel('realtime-messages')
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'messages',
+          },
+          (payload) => {
+            const newMsg = payload.new;
+            const isRelevant =
+              (newMsg.influencer_id === currentUser.id &&
+                newMsg.establisher_id === activeEstablisher.id) ||
+              (newMsg.influencer_id === activeEstablisher.id &&
+                newMsg.establisher_id === currentUser.id);
+
+            if (isRelevant) {
+              setMessages((prev) => [...prev, newMsg]);
+            }
+          }
+        )
+        .subscribe();
+    };
+
+    fetchAndSubscribe();
+
+    return () => {
+      if (subscription) {
+        supabase.removeChannel(subscription);
+      }
+    };
+  }, [currentUser, activeEstablisher]);
 
   // When the influencer taps an establisher, open the chat by setting activeEstablisher and fetching messages.
   const openChat = (establisher: any) => {
     setActiveEstablisher(establisher);
-    fetchMessages(establisher.id.toString());
   };
 
   // Handle sending an attachment (the flow is similar to sending a text message).
