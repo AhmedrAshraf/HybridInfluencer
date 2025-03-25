@@ -13,6 +13,7 @@ declare global {
 function RootLayoutInner() {
   const router = useRouter();
   const { user } = useApp();
+  console.log("🚀 ~ RootLayoutInner ~ user:", user)
 
   useEffect(() => {
     window.frameworkReady?.();
