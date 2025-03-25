@@ -263,7 +263,7 @@ export default function PlaceDetails() {
     }
   };
 
-  const place = establishers.find((p) => p.id == id);
+  const place: any = establishers.find((p) => p.id == id);
 
   if (!place) return null;
 
@@ -287,14 +287,14 @@ export default function PlaceDetails() {
       <ScrollView style={styles.content}>
         <View style={styles.header}>
           <View style={styles.imageContainer}>
-            {place.photos[0] && (
+            {!!place?.photos?.[0] && (
               <Image
                 source={{ uri: place?.photos[currentImageIndex] }}
                 style={styles.image}
               />
             )}
             <View style={styles.dots}>
-              {place?.photos?.map((_, index) => (
+              {place?.photos?.map((_:any, index:any) => (
                 <TouchableOpacity
                   key={index}
                   onPress={() => setCurrentImageIndex(index)}
