@@ -165,7 +165,7 @@ const PlaceList = ({
                 onPress={() => router.push(`/(tabs)/${place.id}`)}
               >
                 <Image
-                  source={{ uri: place.image }}
+                  source={{ uri: place?.photos[0] }}
                   style={styles.fullWidthImage}
                 />
                 <View style={styles.fullWidthInfo}>
@@ -219,7 +219,7 @@ const PlaceList = ({
                 onPress={() => router.push(`/(tabs)/${place.id}`)}
               >
                 <Image
-                  source={{ uri: place.image }}
+                  source={{ uri: place?.photos[0] }}
                   style={styles.trendingImage}
                 />
                 <View style={styles.trendingInfo}>

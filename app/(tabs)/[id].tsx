@@ -1,7 +1,26 @@
-import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, Modal, TextInput } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Image,
+  TouchableOpacity,
+  ScrollView,
+  Modal,
+  TextInput,
+} from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ArrowLeft, Heart, MapPin, Calendar, Users, Clock, X, CircleAlert as AlertCircle, Check } from 'lucide-react-native';
+import {
+  ArrowLeft,
+  Heart,
+  MapPin,
+  Calendar,
+  Users,
+  Clock,
+  X,
+  CircleAlert as AlertCircle,
+  Check,
+} from 'lucide-react-native';
 import Map from 'react-map-gl';
 import { useState, useMemo } from 'react';
 import { useFavorites } from '../../hooks/useFavorites';
@@ -12,9 +31,18 @@ import { supabase } from '@/utils/supabase';
 const ACCENT_COLOR = '#f46d63';
 const ICON_COLOR = '#8e8e93';
 const TEXT_COLOR = '#222222';
-const MAPBOX_TOKEN = 'pk.eyJ1Ijoic2lyaXVzbWF0aCIsImEiOiJjbTV6bjBjN3cwNGYzMm5yMThqcHd6cmJuIn0.jIamAzv1vVhvLFDVxPc0tQ';
+const MAPBOX_TOKEN =
+  'pk.eyJ1Ijoic2lyaXVzbWF0aCIsImEiOiJjbTV6bjBjN3cwNGYzMm5yMThqcHd6cmJuIn0.jIamAzv1vVhvLFDVxPc0tQ';
 
-const days = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
+const days = [
+  'Lundi',
+  'Mardi',
+  'Mercredi',
+  'Jeudi',
+  'Vendredi',
+  'Samedi',
+  'Dimanche',
+];
 const hours = {
   Lundi: '12:00-14:30, 19:00-22:30',
   Mardi: 'Fermé',
@@ -22,7 +50,7 @@ const hours = {
   Jeudi: '12:00-14:30, 19:00-22:30',
   Vendredi: '12:00-14:30, 19:00-23:00',
   Samedi: '12:00-14:30, 19:00-23:00',
-  Dimanche: 'Fermé'
+  Dimanche: 'Fermé',
 };
 
 // Options pour le formulaire de réservation
@@ -32,26 +60,23 @@ const contentTypeOptions = [
   '1 Réel',
   '1 Carrousel',
   '1 Post',
-  '1 Réel TikTok'
+  '1 Réel TikTok',
 ];
 
 const timeframeOptions = [
   'Entre 1 et 3 jours',
   'Entre 3 et 7 jours',
-  'Entre 7 et 15 jours'
+  'Entre 7 et 15 jours',
 ];
 
-const guestOptions = [
-  'Seul(e)',
-  'Avec un +1'
-];
+const guestOptions = ['Seul(e)', 'Avec un +1'];
 
 // Fonction pour analyser les heures d'ouverture
 const parseOpeningHours = (hoursString) => {
   if (hoursString === 'Fermé') return [];
-  
+
   const periods = hoursString.split(', ');
-  return periods.map(period => {
+  return periods.map((period) => {
     const [start, end] = period.split('-');
     return { start, end };
   });
@@ -69,25 +94,27 @@ const getFrenchDayOfWeek = (date) => {
 const generateAvailableHours = (dayOfWeek) => {
   const dayHours = hours[dayOfWeek];
   if (dayHours === 'Fermé') return [];
-  
+
   const periods = parseOpeningHours(dayHours);
   const availableHours = [];
-  
-  periods.forEach(period => {
+
+  periods.forEach((period) => {
     const [startHour, startMinute] = period.start.split(':').map(Number);
     const [endHour, endMinute] = period.end.split(':').map(Number);
-    
+
     // Générer des créneaux de 30 minutes
     let currentHour = startHour;
     let currentMinute = startMinute;
-    
+
     while (
-      currentHour < endHour || 
+      currentHour < endHour ||
       (currentHour === endHour && currentMinute < endMinute - 30) // Laisser 30 minutes avant la fermeture
     ) {
-      const formattedHour = `${currentHour.toString().padStart(2, '0')}:${currentMinute.toString().padStart(2, '0')}`;
+      const formattedHour = `${currentHour
+        .toString()
+        .padStart(2, '0')}:${currentMinute.toString().padStart(2, '0')}`;
       availableHours.push(formattedHour);
-      
+
       // Avancer de 30 minutes
       currentMinute += 30;
       if (currentMinute >= 60) {
@@ -96,16 +123,15 @@ const generateAvailableHours = (dayOfWeek) => {
       }
     }
   });
-  
+
   return availableHours;
 };
 
 export default function PlaceDetails() {
   const { id } = useLocalSearchParams();
-  const { establishers, user } = useApp();
+  const { establishers, user, favoriteIds, toggleFavorite } = useApp();
   const router = useRouter();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const { favoriteIds, toggleFavorite } = useFavorites();
   const { addReservation } = useReservations();
   const [reservationModalVisible, setReservationModalVisible] = useState(false);
   const [reservationSuccess, setReservationSuccess] = useState(false);
@@ -114,14 +140,16 @@ export default function PlaceDetails() {
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedTime, setSelectedTime] = useState('');
   const [selectedGuests, setSelectedGuests] = useState('');
-  const [selectedContentTypes, setSelectedContentTypes] = useState<string[]>([]);
+  const [selectedContentTypes, setSelectedContentTypes] = useState<string[]>(
+    []
+  );
   const [selectedTimeframe, setSelectedTimeframe] = useState('');
   const [specialRequest, setSpecialRequest] = useState('');
-  
+
   // États pour afficher les sélecteurs
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
-  
+
   // Fonction pour formater la date
   const formatDate = (date) => {
     const day = date.getDate().toString().padStart(2, '0');
@@ -129,54 +157,54 @@ export default function PlaceDetails() {
     const year = date.getFullYear();
     return `${day}/${month}/${year}`;
   };
-  
+
   // Fonction pour gérer la sélection multiple des types de contenu
   const toggleContentType = (contentType: string) => {
-    setSelectedContentTypes(prev => {
+    setSelectedContentTypes((prev) => {
       if (prev.includes(contentType)) {
-        return prev.filter(type => type !== contentType);
+        return prev.filter((type) => type !== contentType);
       } else {
         return [...prev, contentType];
       }
     });
   };
-  
+
   // Générer les dates disponibles (prochains 90 jours)
   const getAvailableDates = () => {
     const dates = [];
     const today = new Date();
-    
+
     for (let i = 1; i <= 90; i++) {
       const date = new Date();
       date.setDate(today.getDate() + i);
-      
+
       // Vérifier si le restaurant est ouvert ce jour-là
       const dayOfWeek = getFrenchDayOfWeek(date);
       if (hours[dayOfWeek] !== 'Fermé') {
         dates.push(date);
       }
     }
-    
+
     return dates;
   };
-  
+
   const availableDates = getAvailableDates();
-  
+
   // Obtenir les heures disponibles pour la date sélectionnée
   const availableHours = useMemo(() => {
     if (!selectedDate) return [];
-    
+
     // Convertir la date sélectionnée en objet Date
     const [day, month, year] = selectedDate.split('/').map(Number);
     const date = new Date(year, month - 1, day);
-    
+
     // Obtenir le jour de la semaine
     const dayOfWeek = getFrenchDayOfWeek(date);
-    
+
     // Générer les heures disponibles
     return generateAvailableHours(dayOfWeek);
   }, [selectedDate]);
-  
+
   // Fonction pour soumettre la réservation
   const submitReservation = async () => {
     console.log(selectedDate, 'data');
@@ -194,73 +222,79 @@ export default function PlaceDetails() {
       contentTypes: selectedContentTypes,
       timeframe: selectedTimeframe,
       specialRequest: specialRequest || undefined,
-      status: 'pending'
+      status: 'pending',
     };
-    
+
     try {
       // Insert into Supabase
       const { data, error } = await supabase
-        .from("reservations")
+        .from('reservations')
         .insert([newReservation]);
-  
+
       if (error) {
-        console.error("Error adding reservation:", error.message);
+        console.error('Error adding reservation:', error.message);
         return;
       }
-  
+
       // Add the reservation to Zustand state
       addReservation(newReservation);
-  
+
       // Show success message
       setReservationSuccess(true);
-  
+
       // Close the modal after 2 seconds
       setTimeout(() => {
         setReservationSuccess(false);
         setReservationModalVisible(false);
-  
+
         // Reset the form
-        setSelectedDate("");
-        setSelectedTime("");
-        setSelectedGuests("");
+        setSelectedDate('');
+        setSelectedTime('');
+        setSelectedGuests('');
         setSelectedContentTypes([]);
-        setSelectedTimeframe("");
-        setSpecialRequest("");
-  
+        setSelectedTimeframe('');
+        setSpecialRequest('');
+
         // Redirect to reservations page
-        router.push("/(tabs)/bookings");
+        router.push('/(tabs)/bookings');
       }, 2000);
     } catch (err) {
-      console.error("Unexpected error:", err);
+      console.error('Unexpected error:', err);
     }
   };
 
-  const place = establishers.find(p => p.id == id);
+  const place = establishers.find((p) => p.id == id);
+
   if (!place) return null;
 
-  const images = [
-    place.image,
-    'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4',
-    'https://images.unsplash.com/photo-1559339352-11d035aa65de',
-    'https://images.unsplash.com/photo-1544148103-0773bf10d330'
-  ];
+  // const images = [
+  //   place.image,
+  //   'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4',
+  //   'https://images.unsplash.com/photo-1559339352-11d035aa65de',
+  //   'https://images.unsplash.com/photo-1544148103-0773bf10d330'
+  // ];
 
   // Vérifier si tous les champs obligatoires sont remplis
-  const isFormValid = selectedDate && selectedTime && selectedGuests && selectedContentTypes.length > 0 && selectedTimeframe;
+  const isFormValid =
+    selectedDate &&
+    selectedTime &&
+    selectedGuests &&
+    selectedContentTypes.length > 0 &&
+    selectedTimeframe;
 
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.content}>
         <View style={styles.header}>
           <View style={styles.imageContainer}>
-            {place.image && (
-              <Image 
-                source={{ uri: images[currentImageIndex] }} 
-                style={styles.image} 
+            {place.photos[0] && (
+              <Image
+                source={{ uri: place?.photos[currentImageIndex] }}
+                style={styles.image}
               />
             )}
             <View style={styles.dots}>
-              {images.map((_, index) => (
+              {place?.photos?.map((_, index) => (
                 <TouchableOpacity
                   key={index}
                   onPress={() => setCurrentImageIndex(index)}
@@ -269,27 +303,29 @@ export default function PlaceDetails() {
                   <View
                     style={[
                       styles.dot,
-                      currentImageIndex === index && styles.activeDot
+                      currentImageIndex === index && styles.activeDot,
                     ]}
                   />
                 </TouchableOpacity>
               ))}
             </View>
           </View>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.backButton}
             onPress={() => router.back()}
           >
             <ArrowLeft color={TEXT_COLOR} size={20} />
           </TouchableOpacity>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.favoriteButton}
             onPress={() => toggleFavorite(place)}
           >
-            <Heart 
-              size={20} 
+            <Heart
+              size={20}
               color={favoriteIds.includes(place.id) ? ACCENT_COLOR : TEXT_COLOR}
-              fill={favoriteIds.includes(place.id) ? ACCENT_COLOR : 'transparent'}
+              fill={
+                favoriteIds.includes(place.id) ? ACCENT_COLOR : 'transparent'
+              }
               strokeWidth={1.5}
             />
           </TouchableOpacity>
@@ -301,28 +337,30 @@ export default function PlaceDetails() {
 
           <View style={styles.tags}>
             <View style={styles.tag}>
-              <Text style={styles.tagText}>Terrasse</Text>
+              <Text style={styles.tagText}>{place.type}</Text>
             </View>
             <View style={styles.tag}>
-              <Text style={styles.tagText}>Cave à vin</Text>
+              <Text style={styles.tagText}>{place.category}</Text>
             </View>
           </View>
 
-          <Text style={styles.description}>
-            Une cuisine raffinée et créative dans un cadre élégant
-          </Text>
+          <Text style={styles.description}>{place.offer}</Text>
 
           <View style={styles.socialButtons}>
             <TouchableOpacity style={styles.socialButton}>
-              <Image 
-                source={{ uri: 'https://upload.wikimedia.org/wikipedia/commons/9/95/Instagram_logo_2022.svg' }}
+              <Image
+                source={{
+                  uri: 'https://upload.wikimedia.org/wikipedia/commons/9/95/Instagram_logo_2022.svg',
+                }}
                 style={styles.socialIcon}
               />
               <Text style={styles.socialButtonText}>Instagram</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.socialButton}>
-              <Image 
-                source={{ uri: 'https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg' }}
+              <Image
+                source={{
+                  uri: 'https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg',
+                }}
                 style={styles.socialIcon}
               />
               <Text style={styles.socialButtonText}>Google</Text>
@@ -333,7 +371,7 @@ export default function PlaceDetails() {
             <Text style={styles.sectionTitle}>Où se situe l'établissement</Text>
             <View style={styles.addressContainer}>
               <MapPin size={20} color={ICON_COLOR} />
-              <Text style={styles.address}>25 Rue Saint-Antoine, Marseille</Text>
+              <Text style={styles.address}>{place.location}</Text>
             </View>
             <View style={styles.mapContainer}>
               <Map
@@ -341,7 +379,7 @@ export default function PlaceDetails() {
                 initialViewState={{
                   longitude: 5.3698,
                   latitude: 43.2965,
-                  zoom: 14
+                  zoom: 14,
                 }}
                 style={styles.map}
                 mapStyle="mapbox://styles/mapbox/streets-v11"
@@ -352,29 +390,40 @@ export default function PlaceDetails() {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Horaires</Text>
             <View style={styles.hours}>
-              {days.map(day => (
-                <View key={day} style={styles.hourRow}>
-                  <Text style={styles.day}>{day}</Text>
-                  <Text style={[
-                    styles.time,
-                    hours[day] === 'Fermé' && styles.closed
-                  ]}>{hours[day]}</Text>
-                </View>
-              ))}
+              {place?.openingHours?.map((item, index) => {
+                const parsedItem = JSON.parse(item);
+                return (
+                  <View key={index} style={styles.hourRow}>
+                    <Text style={styles.day}>{parsedItem.day}</Text>
+                    <Text
+                      style={[
+                        styles.time,
+                        parsedItem.isClosed && styles.closed,
+                      ]}
+                    >
+                      {parsedItem.isClosed
+                        ? 'Fermé'
+                        : parsedItem.timeSlots
+                            .map((slot) => `${slot.open} - ${slot.close}`)
+                            .join(', ')}
+                    </Text>
+                  </View>
+                );
+              })}
             </View>
           </View>
         </View>
       </ScrollView>
 
       <View style={styles.footer}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.reserveButton}
           onPress={() => setReservationModalVisible(true)}
         >
           <Text style={styles.reserveButtonText}>Réserver</Text>
         </TouchableOpacity>
       </View>
-      
+
       {/* Modal de réservation */}
       <Modal
         visible={reservationModalVisible}
@@ -391,43 +440,51 @@ export default function PlaceDetails() {
                 </View>
                 <Text style={styles.successTitle}>Demande envoyée !</Text>
                 <Text style={styles.successText}>
-                  Votre demande de réservation a été envoyée avec succès. 
-                  Vous serez redirigé vers vos réservations.
+                  Votre demande de réservation a été envoyée avec succès. Vous
+                  serez redirigé vers vos réservations.
                 </Text>
               </View>
             ) : (
               <>
                 <View style={styles.modalHeader}>
                   <Text style={styles.modalTitle}>Réservation</Text>
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     style={styles.closeButton}
                     onPress={() => setReservationModalVisible(false)}
                   >
                     <X size={20} color={TEXT_COLOR} />
                   </TouchableOpacity>
                 </View>
-                
+
                 <ScrollView style={styles.formContainer}>
                   {/* Sélection de la date */}
                   <Text style={styles.formLabel}>Date de la réservation</Text>
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     style={styles.formInput}
                     onPress={() => {
                       setShowDatePicker(!showDatePicker);
                       setShowTimePicker(false);
                     }}
                   >
-                    <Calendar size={18} color={ICON_COLOR} style={styles.inputIcon} />
-                    <Text style={selectedDate ? styles.inputText : styles.placeholderText}>
-                      {selectedDate || "Sélectionner une date"}
+                    <Calendar
+                      size={18}
+                      color={ICON_COLOR}
+                      style={styles.inputIcon}
+                    />
+                    <Text
+                      style={
+                        selectedDate ? styles.inputText : styles.placeholderText
+                      }
+                    >
+                      {selectedDate || 'Sélectionner une date'}
                     </Text>
                   </TouchableOpacity>
-                  
+
                   {/* Calendrier simplifié */}
                   {showDatePicker && (
                     <View style={styles.datePickerContainer}>
-                      <ScrollView 
-                        horizontal 
+                      <ScrollView
+                        horizontal
                         showsHorizontalScrollIndicator={false}
                         contentContainerStyle={styles.datePickerContent}
                       >
@@ -437,7 +494,8 @@ export default function PlaceDetails() {
                               key={index}
                               style={[
                                 styles.dateOption,
-                                selectedDate === formatDate(date) && styles.selectedDateOption
+                                selectedDate === formatDate(date) &&
+                                  styles.selectedDateOption,
                               ]}
                               onPress={() => {
                                 setSelectedDate(formatDate(date));
@@ -446,17 +504,25 @@ export default function PlaceDetails() {
                                 setShowTimePicker(true); // Afficher le sélecteur d'heure après avoir choisi une date
                               }}
                             >
-                              <Text style={[
-                                styles.dateDay,
-                                selectedDate === formatDate(date) && styles.selectedDateText
-                              ]}>
+                              <Text
+                                style={[
+                                  styles.dateDay,
+                                  selectedDate === formatDate(date) &&
+                                    styles.selectedDateText,
+                                ]}
+                              >
                                 {date.getDate()}
                               </Text>
-                              <Text style={[
-                                styles.dateMonth,
-                                selectedDate === formatDate(date) && styles.selectedDateText
-                              ]}>
-                                {date.toLocaleString('fr-FR', { month: 'short' })}
+                              <Text
+                                style={[
+                                  styles.dateMonth,
+                                  selectedDate === formatDate(date) &&
+                                    styles.selectedDateText,
+                                ]}
+                              >
+                                {date.toLocaleString('fr-FR', {
+                                  month: 'short',
+                                })}
                               </Text>
                             </TouchableOpacity>
                           ))}
@@ -464,10 +530,10 @@ export default function PlaceDetails() {
                       </ScrollView>
                     </View>
                   )}
-                  
+
                   {/* Sélection de l'heure */}
                   <Text style={styles.formLabel}>Heure de la réservation</Text>
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     style={styles.formInput}
                     onPress={() => {
                       if (selectedDate) {
@@ -479,12 +545,20 @@ export default function PlaceDetails() {
                       }
                     }}
                   >
-                    <Clock size={18} color={ICON_COLOR} style={styles.inputIcon} />
-                    <Text style={selectedTime ? styles.inputText : styles.placeholderText}>
-                      {selectedTime || "Sélectionner une heure"}
+                    <Clock
+                      size={18}
+                      color={ICON_COLOR}
+                      style={styles.inputIcon}
+                    />
+                    <Text
+                      style={
+                        selectedTime ? styles.inputText : styles.placeholderText
+                      }
+                    >
+                      {selectedTime || 'Sélectionner une heure'}
                     </Text>
                   </TouchableOpacity>
-                  
+
                   {/* Sélecteur d'heure */}
                   {showTimePicker && (
                     <View style={styles.timePickerContainer}>
@@ -495,17 +569,21 @@ export default function PlaceDetails() {
                               key={index}
                               style={[
                                 styles.timeOption,
-                                selectedTime === time && styles.selectedTimeOption
+                                selectedTime === time &&
+                                  styles.selectedTimeOption,
                               ]}
                               onPress={() => {
                                 setSelectedTime(time);
                                 setShowTimePicker(false);
                               }}
                             >
-                              <Text style={[
-                                styles.timeText,
-                                selectedTime === time && styles.selectedTimeText
-                              ]}>
+                              <Text
+                                style={[
+                                  styles.timeText,
+                                  selectedTime === time &&
+                                    styles.selectedTimeText,
+                                ]}
+                              >
                                 {time}
                               </Text>
                             </TouchableOpacity>
@@ -521,7 +599,7 @@ export default function PlaceDetails() {
                       )}
                     </View>
                   )}
-                  
+
                   {/* Sélection du nombre de personnes */}
                   <Text style={styles.formLabel}>Nombre de personnes</Text>
                   <View style={styles.optionsContainer}>
@@ -530,57 +608,79 @@ export default function PlaceDetails() {
                         key={index}
                         style={[
                           styles.optionButton,
-                          selectedGuests === option && styles.selectedOption
+                          selectedGuests === option && styles.selectedOption,
                         ]}
                         onPress={() => setSelectedGuests(option)}
                       >
-                        <Users size={16} color={selectedGuests === option ? '#fff' : ICON_COLOR} style={styles.optionIcon} />
-                        <Text style={[
-                          styles.optionText,
-                          selectedGuests === option && styles.selectedOptionText
-                        ]}>
+                        <Users
+                          size={16}
+                          color={
+                            selectedGuests === option ? '#fff' : ICON_COLOR
+                          }
+                          style={styles.optionIcon}
+                        />
+                        <Text
+                          style={[
+                            styles.optionText,
+                            selectedGuests === option &&
+                              styles.selectedOptionText,
+                          ]}
+                        >
                           {option}
                         </Text>
                       </TouchableOpacity>
                     ))}
                   </View>
-                  
+
                   {/* Type de contenu (sélection multiple) */}
-                  <Text style={styles.formLabel}>Type de contenu (plusieurs choix possibles)</Text>
+                  <Text style={styles.formLabel}>
+                    Type de contenu (plusieurs choix possibles)
+                  </Text>
                   <View style={styles.contentTypeContainer}>
                     {contentTypeOptions.map((option, index) => (
                       <TouchableOpacity
                         key={index}
                         style={[
                           styles.contentTypeButton,
-                          selectedContentTypes.includes(option) && styles.selectedContentType
+                          selectedContentTypes.includes(option) &&
+                            styles.selectedContentType,
                         ]}
                         onPress={() => toggleContentType(option)}
                       >
                         <View style={styles.contentTypeInner}>
                           {selectedContentTypes.includes(option) && (
-                            <Check size={14} color="#fff" style={styles.checkIcon} />
+                            <Check
+                              size={14}
+                              color="#fff"
+                              style={styles.checkIcon}
+                            />
                           )}
-                          <Text style={[
-                            styles.contentTypeText,
-                            selectedContentTypes.includes(option) && styles.selectedContentTypeText
-                          ]}>
+                          <Text
+                            style={[
+                              styles.contentTypeText,
+                              selectedContentTypes.includes(option) &&
+                                styles.selectedContentTypeText,
+                            ]}
+                          >
                             {option}
                           </Text>
                         </View>
                       </TouchableOpacity>
                     ))}
                   </View>
-                  
+
                   {/* Afficher les types de contenu sélectionnés */}
                   {selectedContentTypes.length > 0 && (
                     <View style={styles.selectedTypesContainer}>
                       <Text style={styles.selectedTypesLabel}>
-                        {selectedContentTypes.length} {selectedContentTypes.length > 1 ? 'types sélectionnés' : 'type sélectionné'}
+                        {selectedContentTypes.length}{' '}
+                        {selectedContentTypes.length > 1
+                          ? 'types sélectionnés'
+                          : 'type sélectionné'}
                       </Text>
                     </View>
                   )}
-                  
+
                   {/* Délai de publication */}
                   <Text style={styles.formLabel}>Délai de publication</Text>
                   <View style={styles.timeframeContainer}>
@@ -589,23 +689,35 @@ export default function PlaceDetails() {
                         key={index}
                         style={[
                           styles.timeframeButton,
-                          selectedTimeframe === option && styles.selectedTimeframe
+                          selectedTimeframe === option &&
+                            styles.selectedTimeframe,
                         ]}
                         onPress={() => setSelectedTimeframe(option)}
                       >
-                        <Clock size={16} color={selectedTimeframe === option ? '#fff' : ICON_COLOR} style={styles.optionIcon} />
-                        <Text style={[
-                          styles.timeframeText,
-                          selectedTimeframe === option && styles.selectedTimeframeText
-                        ]}>
+                        <Clock
+                          size={16}
+                          color={
+                            selectedTimeframe === option ? '#fff' : ICON_COLOR
+                          }
+                          style={styles.optionIcon}
+                        />
+                        <Text
+                          style={[
+                            styles.timeframeText,
+                            selectedTimeframe === option &&
+                              styles.selectedTimeframeText,
+                          ]}
+                        >
                           {option}
                         </Text>
                       </TouchableOpacity>
                     ))}
                   </View>
-                  
+
                   {/* Demande spéciale */}
-                  <Text style={styles.formLabel}>Demande spéciale (optionnel)</Text>
+                  <Text style={styles.formLabel}>
+                    Demande spéciale (optionnel)
+                  </Text>
                   <TextInput
                     style={styles.specialRequestInput}
                     placeholder="Précisez votre demande ici..."
@@ -615,17 +727,19 @@ export default function PlaceDetails() {
                     value={specialRequest}
                     onChangeText={setSpecialRequest}
                   />
-                  
+
                   {/* Bouton de soumission */}
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     style={[
                       styles.submitButton,
-                      !isFormValid && styles.disabledButton
+                      !isFormValid && styles.disabledButton,
                     ]}
                     onPress={submitReservation}
                     disabled={!isFormValid}
                   >
-                    <Text style={styles.submitButtonText}>Confirmer la réservation</Text>
+                    <Text style={styles.submitButtonText}>
+                      Confirmer la réservation
+                    </Text>
                   </TouchableOpacity>
                 </ScrollView>
               </>
@@ -841,7 +955,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
   },
-  
+
   // Styles pour le modal de réservation
   modalOverlay: {
     flex: 1,

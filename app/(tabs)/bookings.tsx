@@ -132,7 +132,7 @@ export default function BookingsScreen() {
                   onPress={() => navigateToPlace(place.id)}
                   activeOpacity={0.7}
                 >
-                  <Image source={{ uri: place.image }} style={styles.placeImage} />
+                  <Image source={{ uri: place?.photos[0] }} style={styles.placeImage} />
                   <View style={styles.placeInfo}>
                     <Text style={styles.placeName}>{place.name}</Text>
                     <Text style={styles.placeType}>{place.type}</Text>

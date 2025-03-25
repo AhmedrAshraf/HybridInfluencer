@@ -43,7 +43,7 @@ export default function FavoritesScreen() {
               style={styles.placeCard}
               activeOpacity={0.8}
             >
-              <Image source={{ uri: place.image }} style={styles.placeImage} />
+              <Image source={{ uri: place?.photos[0] }} style={styles.placeImage} />
               <View style={styles.placeInfo}>
                 <View style={styles.nameRow}>
                   <Text style={styles.placeName}>{place.name}</Text>
