@@ -1,10 +1,10 @@
 // Types pour les messages
 interface Message {
-  id: string;
+  id?: string;
   text: string;
   read: boolean;
   sender: string;
-  timestamp: number;
+  timestamp: any;
   attachment?: {
     type: 'image' | 'document';
     url: string;

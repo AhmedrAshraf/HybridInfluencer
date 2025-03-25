@@ -22,24 +22,19 @@ import {
   Mic,
   MoveVertical as MoreVertical,
 } from 'lucide-react-native';
-import { useRouter, useLocalSearchParams } from 'expo-router';
 import { supabase } from '@/utils/supabase';
 import { styles } from '@/styles/Messages.style';
 
 export default function MessagesScreen() {
-  // State for the list of establishers, selected chat partner, messages, and current influencer user.
   const [establishers, setEstablishers] = useState<any[]>([]);
   const [activeEstablisher, setActiveEstablisher] = useState<any | null>(null);
+  console.log("🚀 ~ MessagesScreen ~ activeEstablisher:", activeEstablisher)
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [currentUser, setCurrentUser] = useState<any>(null);
 
   const flatListRef = useRef<FlatList>(null);
-  const router = useRouter();
-  const params = useLocalSearchParams();
-  // Optionally, you might use a URL param (e.g. userId) to open a chat directly.
-  const { userId } = params;
 
   // Fetch the current influencer user from Supabase Auth.
   useEffect(() => {
@@ -65,7 +60,8 @@ export default function MessagesScreen() {
       if (error) {
         console.error('Error fetching establishers:', error.message);
       } else {
-        setEstablishers(data);
+        console.log('🚀 ~ fetchEstablishers ~ data:', data[0]);
+        setEstablishers(data.map((e) => ({ ...e, id: e.uid })));
       }
     };
     fetchEstablishers();
@@ -77,20 +73,21 @@ export default function MessagesScreen() {
   );
 
   const fetchMessages = async (establisherId: string) => {
+    console.log("🚀 ~ fetchMessages ~ establisherId:", establisherId)
+    console.log("🚀 ~ fetchMessages ~ currentUser.id:", currentUser.id)
     if (!currentUser) return;
-    // Convert establisherId to integer if it's not already
-    const establisherInt = parseInt(establisherId, 10);
     const { data, error } = await supabase
       .from('messages')
       .select('*')
       .match({
         influencer_id: currentUser.id,
-        establisher_id: establisherInt,
+        establisher_id: establisherId,
       })
       .order('timestamp', { ascending: true });
     if (error) {
       console.error('Error fetching messages:', error);
     } else {
+      console.log('🚀 ~ fetchMessages ~ data:', data);
       setMessages(data);
     }
   };
@@ -207,10 +204,10 @@ export default function MessagesScreen() {
       timestamp: new Date().toISOString(), // or let the DB default handle it
       read: false,
     };
-  
+
     const { error } = await supabase.from('messages').insert({
       influencer_id: currentUser.id,
-      establisher_id: parseInt(activeEstablisher.id, 10), // ensure it's an integer
+      establisher_id: activeEstablisher.id,
       text: newMsg.text,
       sender: newMsg.sender,
       timestamp: newMsg.timestamp,
@@ -218,13 +215,13 @@ export default function MessagesScreen() {
     if (error) {
       console.error('Error sending message:', error);
     } else {
-      setMessages(prev => [...prev, newMsg]);
+      setMessages((prev) => [...prev, newMsg]);
       setNewMessage('');
       setTimeout(() => {
         flatListRef.current?.scrollToEnd({ animated: true });
       }, 100);
     }
-  };  
+  };
 
   // Scroll to the bottom of the chat whenever messages update.
   useEffect(() => {
