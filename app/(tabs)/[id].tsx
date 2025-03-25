@@ -23,7 +23,6 @@ import {
 } from 'lucide-react-native';
 import Map from 'react-map-gl';
 import { useState, useMemo } from 'react';
-import { useFavorites } from '../../hooks/useFavorites';
 import { useReservations } from '../../hooks/useReservations';
 import { useApp } from '../context/useContext';
 import { supabase } from '@/utils/supabase';

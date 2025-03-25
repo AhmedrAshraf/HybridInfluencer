@@ -2,9 +2,7 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image } from 'rea
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useEffect } from 'react';
 import { MapPin, Calendar, Clock, Users, MessageCircle, CircleCheck as CheckCircle, Clock as ClockIcon, Circle as XCircle } from 'lucide-react-native';
-import { allPlaces } from '../../data/places';
 import { useRouter } from 'expo-router';
-import { useReservations, Reservation } from '../../hooks/useReservations';
 import { useApp } from '../context/useContext';
 
 // Fonction pour déterminer si une réservation est passée ou à venir

@@ -19,9 +19,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 import { useEffect, useState } from 'react';
-import { useFavorites } from '../../hooks/useFavorites';
-import { useNavigation, useRouter } from 'expo-router';
-import { supabase } from '@/utils/supabase';
+import { useRouter } from 'expo-router';
 import { useApp } from '../context/useContext';
 
 const ACCENT_COLOR = '#f46d63';
@@ -139,7 +137,7 @@ const PlaceList = ({
   data,
   isLastSection = false,
   fullWidth = false,
-}) => {
+}: any) => {
   const { user, fetchFavorites, toggleFavorite, favoriteIds } = useApp();
   const router = useRouter();
 
@@ -157,7 +155,7 @@ const PlaceList = ({
 
         {fullWidth ? (
           <View style={styles.fullWidthContainer}>
-            {data.map((place) => (
+            {data.map((place: any) => (
               <TouchableOpacity
                 key={place.id}
                 style={styles.fullWidthCard}
