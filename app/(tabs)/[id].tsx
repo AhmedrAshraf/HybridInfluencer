@@ -21,14 +21,8 @@ import {
   CircleAlert as AlertCircle,
   Check,
 } from 'lucide-react-native';
-<<<<<<< Updated upstream
 import Map from 'react-map-gl';
-import { useState, useMemo } from 'react';
-=======
-import MapView, { Marker } from 'react-native-maps';
 import { useState, useMemo, useEffect } from 'react';
-import { useFavorites } from '../../hooks/useFavorites';
->>>>>>> Stashed changes
 import { useReservations } from '../../hooks/useReservations';
 import { useApp } from '../context/useContext';
 import { supabase } from '@/utils/supabase';
