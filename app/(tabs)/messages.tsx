@@ -25,6 +25,7 @@ import {
 import { supabase } from '@/utils/supabase';
 import { styles } from '@/styles/Messages.style';
 import { useApp } from '../context/useContext';
+import { sendPushNotification } from '@/hooks/NotificationProvider';
 
 export default function MessagesScreen() {
   const [activeEstablisher, setActiveEstablisher] = useState<any | null>(null);
@@ -205,6 +206,7 @@ export default function MessagesScreen() {
       timestamp: newMsg.timestamp,
       attachment: newMsg.attachment, // Ensure your column supports JSON if needed
     });
+
     if (error) {
       console.error('Error sending attachment message:', error.message);
     } else {
@@ -230,6 +232,31 @@ export default function MessagesScreen() {
       sender: newMsg.sender,
       timestamp: newMsg.timestamp,
     });
+
+    const { data: ownerData, error: ownerError } = await supabase
+      .from('establishers')
+      .select('token')
+      .eq('uid', activeEstablisher.id)
+      .single();
+
+    if (ownerError) {
+      console.error('Error fetching establishment owner:', ownerError.message);
+      return;
+    }
+
+    // Check if the owner has a push token
+    const ownerPushToken = ownerData?.token;
+    if (ownerPushToken) {
+      await sendPushNotification(
+        ownerPushToken,
+        'Nouveau message 📩',
+        `${currentUser?.name} vous a envoyé un nouveau message.`,
+        { chatId: activeEstablisher.id }
+      );
+    } else {
+      console.warn('Establishment owner does not have a push token.');
+    }
+
     if (error) {
       console.error('Error sending message:', error);
     } else {
