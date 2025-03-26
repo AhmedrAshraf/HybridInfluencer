@@ -3,6 +3,7 @@ import { Stack, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { AppProvider, useApp } from '../app/context/useContext';
 import NotificationProvider from '@/hooks/NotificationProvider';
+import { ActivityIndicator, View } from 'react-native';
 
 declare global {
   interface Window {
@@ -12,13 +13,12 @@ declare global {
 
 function RootLayoutInner() {
   const router = useRouter();
-  const { user } = useApp();
-  console.log("🚀 ~ RootLayoutInner ~ user:", user)
+  const { user, loading } = useApp();
 
   useEffect(() => {
     window.frameworkReady?.();
 
-    if (user === undefined) return;
+    if (user === undefined || loading === true) return;
 
     if (!user) {
       router.replace('/auth/signUp');
@@ -26,6 +26,14 @@ function RootLayoutInner() {
       router.replace('/(tabs)');
     }
   }, [user]);
+
+  if (loading) {
+    return (
+      <View style={{ justifyContent: 'center', alignItems: 'center', flex: 1 }}>
+        <ActivityIndicator size={50} />
+      </View>
+    );
+  }
 
   return (
     <>

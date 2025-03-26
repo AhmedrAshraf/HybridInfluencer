@@ -24,51 +24,38 @@ import {
 } from 'lucide-react-native';
 import { supabase } from '@/utils/supabase';
 import { styles } from '@/styles/Messages.style';
+import { useApp } from '../context/useContext';
 
 export default function MessagesScreen() {
-  const [establishers, setEstablishers] = useState<any[]>([]);
   const [activeEstablisher, setActiveEstablisher] = useState<any | null>(null);
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<any>([]);
   const [newMessage, setNewMessage] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [currentUser, setCurrentUser] = useState<any>(null);
+  const { establishers, fetchEstablishments } = useApp();
 
   const flatListRef = useRef<FlatList>(null);
 
   // Fetch the current influencer user from Supabase Auth.
   useEffect(() => {
     const fetchCurrentUser = async () => {
-      const {
-        data: { user },
-        error,
-      } = await supabase.auth.getUser();
+      const { data, error } = await supabase.auth.getUser();
       if (error) {
         console.error('Error fetching current user:', error.message);
-      } else {
-        setCurrentUser(user);
+        return;
       }
+      setCurrentUser(data.user);
     };
     fetchCurrentUser();
+    if (!establishers.length) {
+      fetchEstablishments();
+    }
   }, []);
 
-  // Fetch all establishers from Supabase.
-  useEffect(() => {
-    const fetchEstablishers = async () => {
-      const { data, error } = await supabase.from('establishers').select('*');
-
-      if (error) {
-        console.error('Error fetching establishers:', error.message);
-      } else {
-        setEstablishers(data.map((e) => ({ ...e, id: e.uid })));
-      }
-    };
-    fetchEstablishers();
-  }, []);
-
-  // Filter establishers by name based on the search query.
-  const filteredEstablishers = establishers.filter((establisher) =>
+  const filteredEstablishers = establishers.filter((establisher: any) =>
     establisher.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
   useEffect(() => {
     if (!currentUser || !activeEstablisher) return;
 
@@ -109,7 +96,7 @@ export default function MessagesScreen() {
                 newMsg.establisher_id === currentUser.id);
 
             if (isRelevant) {
-              setMessages((prev) => [...prev, newMsg]);
+              setMessages((prev: any) => [...prev, newMsg]);
             }
           }
         )
@@ -221,7 +208,6 @@ export default function MessagesScreen() {
     if (error) {
       console.error('Error sending attachment message:', error.message);
     } else {
-      setMessages((prev) => [...prev, newMsg]);
       setTimeout(() => {
         flatListRef.current?.scrollToEnd({ animated: true });
       }, 100);
@@ -247,7 +233,6 @@ export default function MessagesScreen() {
     if (error) {
       console.error('Error sending message:', error);
     } else {
-      setMessages((prev) => [...prev, newMsg]);
       setNewMessage('');
       setTimeout(() => {
         flatListRef.current?.scrollToEnd({ animated: true });
