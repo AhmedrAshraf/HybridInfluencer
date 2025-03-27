@@ -21,12 +21,12 @@ import {
   CircleAlert as AlertCircle,
   Check,
 } from 'lucide-react-native';
-import Map from 'react-map-gl';
 import { useState, useMemo, useEffect } from 'react';
 import { useReservations } from '../../hooks/useReservations';
 import { useApp } from '../context/useContext';
 import { supabase } from '@/utils/supabase';
 import { sendPushNotification } from '@/hooks/NotificationProvider';
+import MapView, { Marker } from 'react-native-maps';
 
 const ACCENT_COLOR = '#f46d63';
 const ICON_COLOR = '#8e8e93';
