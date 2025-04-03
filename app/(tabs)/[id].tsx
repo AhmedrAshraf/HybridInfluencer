@@ -244,7 +244,7 @@ export default function PlaceDetails() {
       const { data: ownerData, error: ownerError } = await supabase
         .from('establishers')
         .select('token')
-        .eq('id', id)
+        .eq('uid', id)
         .single();
 
       if (ownerError) {
