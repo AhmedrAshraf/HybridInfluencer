@@ -1,5 +1,3 @@
-'use client';
-
 import { supabase } from '@/utils/supabase';
 import {
   createContext,
@@ -133,17 +131,40 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
   };
 
   const fetchReservations = async () => {
+    if (!user?.uuid) return;
+  
     const { data: reserveData, error: reserverError } = await supabase
       .from('reservations')
       .select('*')
       .eq('userId', user?.uuid);
-
+  
     if (reserverError || !reserveData) {
-      setReservations(null);
+      setReservations([]);
     } else {
       setReservations(reserveData);
     }
   };
+  
+  // Subscribe to real-time updates
+  useEffect(() => {
+    if (!user?.uuid) return;
+  
+    const reservationSubscription = supabase
+      .channel('reservations')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'reservations' },
+        (payload) => {
+          console.log('Realtime Update:', payload);
+          fetchReservations(); // Fetch latest reservations on change
+        }
+      )
+      .subscribe();
+  
+    return () => {
+      supabase.removeChannel(reservationSubscription);
+    };
+  }, [user?.uuid]);
 
   const fetchConversations = async () => {
     const { data: conversationData, error: conversationError } = await supabase
