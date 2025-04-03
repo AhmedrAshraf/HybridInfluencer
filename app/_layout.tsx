@@ -17,15 +17,15 @@ function RootLayoutInner() {
 
   useEffect(() => {
     window.frameworkReady?.();
-
-    if (user === undefined || loading === true) return;
-
+  
+    if (loading) return;
+  
     if (!user) {
       router.replace('/auth/signUp');
     } else {
       router.replace('/(tabs)');
     }
-  }, [user]);
+  }, [user, loading]);  
 
   if (loading) {
     return (
