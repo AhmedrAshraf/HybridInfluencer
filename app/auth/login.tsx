@@ -49,7 +49,7 @@ export default function LoginScreen({ navigation }: any) {
 
       console.log('🚀 ~ signInWithEmail ~ error:', error);
 
-      router.push('/(tabs)/index');
+      router.push('/(tabs)');
     } catch (error: any) {
       Alert.alert('Error', error.message);
     } finally {
