@@ -167,7 +167,7 @@ export default function LoginScreen({ navigation }: any) {
             )}
           </TouchableOpacity>
 
-          <View style={styles.dividerContainer}>
+          {/* <View style={styles.dividerContainer}>
             <View style={styles.divider} />
             <Text style={styles.dividerText}>or</Text>
             <View style={styles.divider} />
@@ -181,7 +181,7 @@ export default function LoginScreen({ navigation }: any) {
           <TouchableOpacity style={styles.socialButton}>
             <Ionicons name="logo-apple" size={20} color="#000" />
             <Text style={styles.socialButtonText}>Continue with Apple</Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
         </View>
 
         <View style={styles.footer}>
