@@ -20,7 +20,6 @@ import {
   Send,
   Paperclip,
   Mic,
-  MoveVertical as MoreVertical,
 } from 'lucide-react-native';
 import { supabase } from '@/utils/supabase';
 import { styles } from '@/styles/Messages.style';
@@ -422,9 +421,6 @@ export default function MessagesScreen() {
             <Text style={styles.businessName}>{activeEstablisher.name}</Text>
           </View>
         </View>
-        <TouchableOpacity style={styles.moreButton}>
-          <MoreVertical size={20} color="#222222" />
-        </TouchableOpacity>
       </View>
       <FlatList
         ref={flatListRef}
