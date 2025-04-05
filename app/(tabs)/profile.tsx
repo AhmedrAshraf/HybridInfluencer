@@ -336,7 +336,7 @@ export default function ProfileScreen() {
                   style={styles.editButton}
                   onPress={() => {
                     supabase.auth.signOut();
-                    router.push('/auth/login');
+                    router.push('/(auth)/login');
                   }}
                 >
                   <Text style={styles.editButtonText}>Logout</Text>

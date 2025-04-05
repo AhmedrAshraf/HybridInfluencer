@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
-import { Stack, useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { Slot, Stack, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { AppProvider, useApp } from '../app/context/useContext';
 import NotificationProvider from '@/hooks/NotificationProvider';
@@ -12,24 +12,25 @@ declare global {
 }
 
 function RootLayoutInner() {
+  const [appIsReady, setAppIsReady] = useState(false);
   const router = useRouter();
   const { user, loading } = useApp();
 
   useEffect(() => {
     window.frameworkReady?.();
-  
-    if (loading) return;
-  
-    if (!user) {
-      router.replace('/auth/signUp');
-    } else {
-      router.replace('/(tabs)');
-    }
-  }, [user, loading]);  
 
-  if (loading) {
+    if (!loading) {
+      setAppIsReady(true);
+    }
+  }, [loading]);
+
+  useEffect(() => {
+    window.frameworkReady?.();
+  }, [user, appIsReady, loading, router]);
+
+  if (!appIsReady || loading) {
     return (
-      <View style={{ justifyContent: 'center', alignItems: 'center', flex: 1 }}>
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
         <ActivityIndicator size={50} />
       </View>
     );
@@ -37,9 +38,7 @@ function RootLayoutInner() {
 
   return (
     <>
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="+not-found" />
-      </Stack>
+      <Slot /> 
       <StatusBar style="auto" />
     </>
   );

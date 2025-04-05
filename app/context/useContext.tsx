@@ -53,6 +53,7 @@ interface ContextType {
   setFavorites: any;
   fetchEstablishments: () => void;
   fetchReservations: () => void;
+  fetchUser: () => void;
   fetchConversations: () => void;
   fetchFavorites: () => void;
   toggleFavorite: (place: any) => void;
@@ -71,7 +72,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
   const [conversations, setConversations] = useState<any>([]);
   const [favoriteIds, setFavoriteIds] = useState<any>([]);
 
-  useEffect(() => {
     const fetchUser = async () => {
       setLoading(true);
       const { data: authData, error: authError } =
@@ -100,8 +100,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
       setLoading(false);
     };
 
-    fetchUser();
-
+  useEffect(() => {
     const { data: authListener } = supabase.auth.onAuthStateChange(
       (_event, session) => {
         if (session?.user) {
@@ -226,6 +225,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
         fetchReservations,
         fetchFavorites,
         toggleFavorite,
+        fetchUser,
       }}
     >
       {children}

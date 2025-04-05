@@ -163,9 +163,12 @@ const PlaceList = ({
                 onPress={() => router.push(`/(tabs)/${place.id}`)}
               >
                 <Image
-                  source={{ uri: place?.photos[0] }}
+                  source={{
+                    uri: place?.photos?.[0] ?? 'https://via.placeholder.com/300', // Default image
+                  }}
                   style={styles.fullWidthImage}
                 />
+
                 <View style={styles.fullWidthInfo}>
                   <View style={styles.nameRow}>
                     <Text style={styles.placeName}>{place.name}</Text>
@@ -367,7 +370,7 @@ export default function ExploreScreen() {
         <PlaceList title="Nouveautés" data={newPlaces} />
         <PlaceList
           title="Tous les établissements"
-          data={filteredPlaces}
+          data={establishers}
           isLastSection
           fullWidth
         />

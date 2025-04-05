@@ -16,10 +16,12 @@ import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '@/utils/supabase';
 import { useRouter } from 'expo-router';
 import { registerForPushNotificationsAsync } from '@/hooks/NotificationProvider';
+import { useApp } from '../context/useContext';
 
 export default function LoginScreen({ navigation }: any) {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const { fetchUser } = useApp()
+  const [email, setEmail] = useState('ahmed@gmail.com');
+  const [password, setPassword] = useState('12345678');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
@@ -38,6 +40,7 @@ export default function LoginScreen({ navigation }: any) {
         email,
         password,
       });
+      console.log("🚀 ~ signInWithEmail ~ data:", data)
       if (data?.user?.id) {
         await supabase
           .from('influencers')
@@ -47,11 +50,16 @@ export default function LoginScreen({ navigation }: any) {
 
       if (error) throw error;
 
+      fetchUser()
       console.log('🚀 ~ signInWithEmail ~ error:', error);
 
-      router.push('/(tabs)');
+      // setTimeout(() => {
+      //   router.push('/(tabs)');
+      // }, 500); // 100ms delay ensures navigation is ready
+  
     } catch (error: any) {
       Alert.alert('Error', error.message);
+      console.log("🚀 ~ signInWithEmail ~ error:", error.message)
     } finally {
       setLoading(false);
     }
@@ -75,6 +83,12 @@ export default function LoginScreen({ navigation }: any) {
         'Password Reset Email Sent',
         'Check your email for a password reset link'
       );
+      // FIX: Add minimal delay before navigation
+    // setTimeout(() => {
+    //   router.push('/(tabs)');
+    // }, 500); // 100ms delay ensures navigation is ready
+
+
     } catch (error: any) {
       Alert.alert('Error', error.message);
     } finally {
@@ -186,7 +200,7 @@ export default function LoginScreen({ navigation }: any) {
 
         <View style={styles.footer}>
           <Text style={styles.footerText}>Don't have an account?</Text>
-          <TouchableOpacity onPress={() => router.push('/auth/signUp')}>
+          <TouchableOpacity onPress={() => router.push('/(auth)/signUp')}>
             <Text style={styles.footerLink}>Sign Up</Text>
           </TouchableOpacity>
         </View>
