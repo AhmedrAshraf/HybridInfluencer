@@ -302,9 +302,6 @@ export default function ExploreScreen() {
               </View>
             </View>
           </View>
-          <TouchableOpacity onPress={() => setNotificationsModalVisible(true)}>
-            <Bell color={TEXT_COLOR} size={18} />
-          </TouchableOpacity>
         </TouchableOpacity>
         <View style={styles.searchContainer}>
           <TextInput
