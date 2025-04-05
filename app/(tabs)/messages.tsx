@@ -24,6 +24,7 @@ import { supabase } from '@/utils/supabase';
 import { styles } from '@/styles/Messages.style';
 import { useApp } from '../context/useContext';
 import { sendPushNotification } from '@/hooks/NotificationProvider';
+import { router } from 'expo-router';
 
 export default function MessagesScreen() {
   const [activeEstablisher, setActiveEstablisher] = useState<any | null>(null);
@@ -274,6 +275,10 @@ export default function MessagesScreen() {
     }
   }, [messages]);
 
+  const navigateToInfluencerProfile = (id: string) => {
+    router.push(`/(tabs)/${id}`);
+  };
+
   // Render an establisher in the conversation list.
   const renderEstablisherItem = ({ item }: { item: any }) => {
     // Use the first photo if available, or a placeholder image.
@@ -409,7 +414,7 @@ export default function MessagesScreen() {
         >
           <ArrowLeft size={20} color="#222222" />
         </TouchableOpacity>
-        <View style={styles.businessInfo}>
+        <TouchableOpacity style={styles.businessInfo} onPress={() => navigateToInfluencerProfile(activeEstablisher.id)}>
           {activeEstablisher.photos && activeEstablisher.photos.length > 0 && (
             <Image
               source={{ uri: activeEstablisher.photos[0] }}
@@ -419,7 +424,7 @@ export default function MessagesScreen() {
           <View>
             <Text style={styles.businessName}>{activeEstablisher.name}</Text>
           </View>
-        </View>
+        </TouchableOpacity>
       </View>
       <FlatList
         ref={flatListRef}
