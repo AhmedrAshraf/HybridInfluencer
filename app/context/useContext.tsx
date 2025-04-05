@@ -207,6 +207,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     }
   };
 
+  useEffect(() => {
+    fetchUser();
+  }, []);
+
   return (
     <Context.Provider
       value={{

@@ -13,6 +13,7 @@
     "@react-native-async-storage/async-storage": "^2.1.2",
     "@react-navigation/bottom-tabs": "^7.2.0",
     "@react-navigation/native": "^7.0.14",
+    "@supabase/auth-js": "^2.69.1",
     "@supabase/supabase-js": "^2.49.1",
     "expo": "52.0.33",
     "expo-blur": "^14.0.3",

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Slot, Stack, useRouter } from 'expo-router';
+import { Slot, Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { AppProvider, useApp } from '../app/context/useContext';
 import NotificationProvider from '@/hooks/NotificationProvider';
@@ -14,6 +14,7 @@ declare global {
 function RootLayoutInner() {
   const [appIsReady, setAppIsReady] = useState(false);
   const router = useRouter();
+  const segments = useSegments();
   const { user, loading } = useApp();
 
   useEffect(() => {
@@ -25,8 +26,20 @@ function RootLayoutInner() {
   }, [loading]);
 
   useEffect(() => {
-    window.frameworkReady?.();
-  }, [user, appIsReady, loading, router]);
+    if (!loading && appIsReady) {
+      const inAuthGroup = segments[0] === '(auth)';
+      
+      // If no user is logged in and we're not in the auth group, redirect to login
+      if (!user && !inAuthGroup) {
+        router.replace('/(auth)/login');
+      }
+      
+      // If we have a user and we're in the auth group, redirect to home
+      if (user && inAuthGroup) {
+        router.replace('/(tabs)');
+      }
+    }
+  }, [user, loading, appIsReady, segments]);
 
   if (!appIsReady || loading) {
     return (
@@ -38,7 +51,7 @@ function RootLayoutInner() {
 
   return (
     <>
-      <Slot /> 
+      <Slot />
       <StatusBar style="auto" />
     </>
   );

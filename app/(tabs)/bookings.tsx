@@ -124,13 +124,15 @@ export default function BookingsScreen() {
             const statusInfo = getStatusInfo(reservation.status);
             
             return (
-              <View key={reservation.id} style={styles.reservationCard}>
+              <View key={reservation?.id} style={styles.reservationCard}>
                 <TouchableOpacity 
                   style={styles.cardHeader}
-                  onPress={() => navigateToPlace(place.id)}
+                  onPress={() => navigateToPlace(place?.id)}
                   activeOpacity={0.7}
                 >
-                  <Image source={{ uri: place?.photos[0] }} style={styles.placeImage} />
+                  {place?.photos && (
+                    <Image source={{ uri: place?.photos[0] || 'https://woodbinedevelopment.com/wp-content/uploads/2019/05/hero-legacy-2000x700.jpg'}} style={styles.placeImage} />
+                  )}
                   <View style={styles.placeInfo}>
                     <Text style={styles.placeName}>{place.name}</Text>
                     <Text style={styles.placeType}>{place.type}</Text>
