@@ -19,7 +19,6 @@ import {
   ArrowLeft,
   Send,
   Paperclip,
-  Mic,
 } from 'lucide-react-native';
 import { supabase } from '@/utils/supabase';
 import { styles } from '@/styles/Messages.style';
@@ -448,13 +447,9 @@ export default function MessagesScreen() {
           onChangeText={setNewMessage}
           multiline
         />
-        {newMessage.trim() ? (
+        {newMessage.trim() && (
           <TouchableOpacity style={styles.sendButton} onPress={sendMessage}>
             <Send size={20} color="#fff" />
-          </TouchableOpacity>
-        ) : (
-          <TouchableOpacity style={styles.micButton}>
-            <Mic size={20} color="#8e8e93" />
           </TouchableOpacity>
         )}
       </KeyboardAvoidingView>
